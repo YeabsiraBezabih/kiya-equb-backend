@@ -1,0 +1,67 @@
+{
+  "server": {
+    "port": 3001,
+    "host": "0.0.0.0"
+  },
+  "database": {
+    "url": "mongodb://localhost:27017/ekub-app-prod",
+    "options": {
+      "useNewUrlParser": true,
+      "useUnifiedTopology": true,
+      "maxPoolSize": 20,
+      "serverSelectionTimeoutMS": 10000,
+      "socketTimeoutMS": 60000,
+      "bufferMaxEntries": 0,
+      "ssl": true,
+      "sslValidate": true,
+      "retryWrites": true,
+      "w": "majority"
+    }
+  },
+  "jwt": {
+    "secret": "your-super-secret-jwt-key-change-in-production",
+    "refreshSecret": "your-super-secret-refresh-key-change-in-production",
+    "accessExpiry": "15m",
+    "refreshExpiry": "7d"
+  },
+  "cors": {
+    "origins": [
+      "https://yourdomain.com",
+      "https://www.yourdomain.com",
+      "https://app.yourdomain.com"
+    ]
+  },
+  "logging": {
+    "level": "warn",
+    "filename": "logs/app.log",
+    "maxSize": "100m",
+    "maxFiles": "30d"
+  },
+  "email": {
+    "service": "gmail",
+    "user": "your-email@gmail.com",
+    "pass": "your-app-password"
+  },
+  "sms": {
+    "provider": "twilio",
+    "accountSid": "your-twilio-account-sid",
+    "authToken": "your-twilio-auth-token",
+    "fromNumber": "+1234567890"
+  },
+  "fileUpload": {
+    "maxSize": "5MB",
+    "allowedTypes": ["image/jpeg", "image/png", "image/gif"],
+    "uploadPath": "uploads/"
+  },
+  "security": {
+    "bcryptRounds": 12,
+    "sessionTimeout": 1800000,
+    "maxLoginAttempts": 3,
+    "lockoutDuration": 1800000
+  },
+  "rateLimiting": {
+    "windowMs": 900000,
+    "max": 50,
+    "message": "Too many requests from this IP, please try again later."
+  }
+}

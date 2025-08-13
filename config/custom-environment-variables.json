@@ -1,0 +1,24 @@
+{
+  "database": {
+    "url": "MONGODB_URI"
+  },
+  "jwt": {
+    "secret": "JWT_SECRET",
+    "refreshSecret": "JWT_REFRESH_SECRET"
+  },
+  "cors": {
+    "origins": "CORS_ORIGINS"
+  },
+  "email": {
+    "user": "EMAIL_USER",
+    "pass": "EMAIL_PASS"
+  },
+  "sms": {
+    "accountSid": "TWILIO_ACCOUNT_SID",
+    "authToken": "TWILIO_AUTH_TOKEN",
+    "fromNumber": "TWILIO_FROM_NUMBER"
+  },
+  "server": {
+    "port": "PORT"
+  }
+}
