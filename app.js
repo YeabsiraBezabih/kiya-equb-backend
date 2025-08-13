@@ -8,10 +8,14 @@ const rateLimit = require("express-rate-limit");
 
 const app = express();
 
+try{
 // Import startup modules
 require('./startup/prod.js')(app);
 require("./startup/db.startup.js")();
 require("./startup/logger.startup.js")();
+}catch(err) {
+  console.error("Error during startup:", err);
+}
 
 // Security middleware
 app.use(helmet({
@@ -147,7 +151,7 @@ const port = config.get("server.port") || process.env.PORT || 3001;
 const server = app.listen(port, config.get("server.host") || "0.0.0.0", () => {
   console.log(`🚀 Ekub App Backend is running on port ${port}`);
   console.log(`🌍 Environment: ${config.util.getEnv("NODE_ENV")}`);
-  console.log(`🔗 Health check: http://localhost:${port}/health`);
+  console.log(`🔗 Health check: ${config.get("database.url")}:${port}/health`);
 });
 
 // Graceful shutdown

@@ -4,36 +4,37 @@ const config = require("config");
 
 module.exports = function () {
   const dbUrl = config.get("database.url");
-  const dbOptions = config.get("database.options") || {};
 
+  console.log("Connecting to MongoDB:", dbUrl);
   mongoose
-    .connect(dbUrl, dbOptions)
+    .connect(dbUrl)
     .then(() => {
-      logger.info(`Connected to MongoDB: ${dbUrl.split('@')[1] || dbUrl}`);
+      logger.info(`Connected to MongoDB: ${dbUrl.split("@")[1] || dbUrl}`);
       logger.info(`Database: ${mongoose.connection.name}`);
     })
     .catch((err) => {
+      console.log("Failed to connect to MongoDB:", dbUrl, err.message);
       logger.error("Failed to connect to MongoDB:", err.message);
       process.exit(1);
     });
 
   // Handle connection events
-  mongoose.connection.on('error', (err) => {
-    logger.error('MongoDB connection error:', err);
+  mongoose.connection.on("error", (err) => {
+    logger.error("MongoDB connection error:", err);
   });
 
-  mongoose.connection.on('disconnected', () => {
-    logger.warn('MongoDB disconnected');
+  mongoose.connection.on("disconnected", () => {
+    logger.warn("MongoDB disconnected");
   });
 
-  mongoose.connection.on('reconnected', () => {
-    logger.info('MongoDB reconnected');
+  mongoose.connection.on("reconnected", () => {
+    logger.info("MongoDB reconnected");
   });
 
   // Graceful shutdown
-  process.on('SIGINT', async () => {
+  process.on("SIGINT", async () => {
     await mongoose.connection.close();
-    logger.info('MongoDB connection closed through app termination');
+    logger.info("MongoDB connection closed through app termination");
     process.exit(0);
   });
 };
