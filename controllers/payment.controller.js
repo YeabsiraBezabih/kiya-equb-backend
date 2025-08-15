@@ -102,7 +102,7 @@ const processPayment = async (req, res) => {
     const processedBy = req.user._id;
 
     // Check if user has permission to process payments
-    if (!['collector', 'admin'].includes(role)) {
+    if (!['collector', 'admin',"judge","writer"].includes(role)) {
       return res.status(403).json({
         status: "error",
         error: {

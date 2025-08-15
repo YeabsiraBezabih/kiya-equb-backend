@@ -72,7 +72,7 @@ const authenticateToken = async (req, res, next) => {
 const checkEqubRole = (allowedRoles) => {
   return async (req, res, next) => {
     try {
-      const { equbId } = req.params;
+      const { equbId } = req.body;
       const userId = req.user._id;
 
       // Find the equb and check user's role
