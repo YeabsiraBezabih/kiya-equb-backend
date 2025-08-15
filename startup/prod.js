@@ -6,6 +6,10 @@ const rateLimit = require("express-rate-limit");
 const config = require("config");
 
 module.exports = function (app) {
+
+
+  app.set('trust proxy', 1);
+
   // Security middleware
   app.use(
     helmet({
