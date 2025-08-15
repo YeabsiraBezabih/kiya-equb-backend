@@ -21,7 +21,7 @@ router.post('/join-equb', validateJoinEqub, equbController.joinEqub);
 router.post('/my-equbs', equbController.getMyEqubs);
 
 // Equb details (requires membership)
-router.get('/:equbId', isEqubMember, equbController.getEqubDetails);
+router.get('/:equbId', equbController.getEqubDetails);
 
 // Equb administration (requires admin role)
 router.post('/:equbId/members', isEqubAdmin, validateAddMember, equbController.addMember);
