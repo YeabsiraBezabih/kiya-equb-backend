@@ -222,26 +222,37 @@ const joinEqub = async (req, res) => {
 // Get My Equbs
 const getMyEqubs = async (req, res) => {
   try {
-    const userId = req.user._id;
-    const { userEkubId } = req.body;
+    const userId = req.user._id; // Auth middleware should already set req.user
 
-    let query = { "members.userId": userId, "members.isActive": true };
-
-    // Filter by specific equb IDs if provided
-    if (userEkubId && userEkubId.length > 0) {
-      query.equbId = { $in: userEkubId };
+    // Check if the user exists
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        status: "error",
+        error: {
+          code: "user/not-found",
+          message: "User not found",
+        },
+      });
     }
 
-    const equbs = await Equb.find(query)
+    const Equb = require("../models/Equb");
+
+    // Find all equbs where the user is an active member
+    const equbs = await Equb.find({
+      "members.userId": userId,
+      "members.isActive": true,
+    })
       .populate("members.userId", "fullName")
       .sort({ "members.joinedDate": -1 });
 
+    // Map response
     const myEqubs = equbs.map((equb) => {
       const member = equb.members.find(
         (m) => m.userId._id.toString() === userId.toString()
       );
 
-      // Calculate next payment date based on round duration
+      // Calculate next payment date
       let nextPaymentDate = new Date(equb.startDate);
       if (equb.roundDuration === "weekly") {
         nextPaymentDate.setDate(
@@ -255,7 +266,7 @@ const getMyEqubs = async (req, res) => {
         nextPaymentDate.setDate(nextPaymentDate.getDate() + equb.currentRound);
       }
 
-      // Get payment status for current round
+      // Payment status for current round
       const currentRoundPayment = member.paymentHistory.find(
         (p) => p.roundNumber === equb.currentRound
       );

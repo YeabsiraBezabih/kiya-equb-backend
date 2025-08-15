@@ -18,7 +18,7 @@ router.get('/discover-equbs', validateDiscoverEqubs, equbController.discoverEqub
 router.post('/join-equb', validateJoinEqub, equbController.joinEqub);
 
 // User's equbs
-router.post('/my-equbs', validateGetMyEqubs, equbController.getMyEqubs);
+router.post('/my-equbs', equbController.getMyEqubs);
 
 // Equb details (requires membership)
 router.get('/:equbId', isEqubMember, equbController.getEqubDetails);
