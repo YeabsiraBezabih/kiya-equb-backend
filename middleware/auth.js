@@ -129,7 +129,7 @@ const checkEqubRole = (allowedRoles) => {
 };
 
 // Middleware to check if user is equb admin
-const isEqubAdmin = checkEqubRole(["admin"]);
+const isEqubAdmin = checkEqubRole(["admin","collector","judge","writer"]);
 
 // Middleware to check if user is collector or admin
 const isCollectorOrAdmin = checkEqubRole([
