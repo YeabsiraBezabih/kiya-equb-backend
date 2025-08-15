@@ -414,7 +414,6 @@ const getEqubDetails = async (req, res) => {
 // Add New Member
 const addMember = async (req, res) => {
   try {
-    const { equbId } = req.params;
     const {
       fullName,
       formNumber,
