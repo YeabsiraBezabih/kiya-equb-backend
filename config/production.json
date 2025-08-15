@@ -1,7 +1,7 @@
 {
   "server": {
     "port": 3001,
-    "host": "0.0.0.0"
+    "host": "Mongo Atlas"
   },
   "database": {
     "url": "mongodb://localhost:27017/ekub-app-prod",

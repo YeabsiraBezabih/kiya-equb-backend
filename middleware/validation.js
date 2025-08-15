@@ -42,7 +42,7 @@ const commonSchemas = {
 const authSchemas = {
   signIn: Joi.object({
     phoneNumber: commonSchemas.phoneNumber.required(),
-    password: Joi.string().required()
+    password: commonSchemas.password.required()
   }),
   
   signUp: Joi.object({
@@ -111,11 +111,11 @@ const equbSchemas = {
     formNumber: Joi.number().integer().min(1).required(),
     secretNumber: Joi.string().length(6).optional()
   }),
-  
+     
   getMyEqubs: Joi.object({
     userEkubId: Joi.array().items(commonSchemas.equbId).optional()
   }),
-  
+      
   addMember: Joi.object({
     fullName: Joi.string()
       .min(2)
@@ -142,7 +142,7 @@ const equbSchemas = {
     totalSaving: Joi.number().min(1000).max(500000).required(),
     duration: Joi.string().valid('daily', 'weekly', 'monthly').required(),
     level: Joi.string().valid('old', 'new').required(),
-    startDate: Joi.date().min('now').required(),
+    startDate: Joi.date().required(),
     bankAccountDetail: Joi.array().items(
       Joi.object({
         bankName: Joi.string().min(2).max(100).required(),

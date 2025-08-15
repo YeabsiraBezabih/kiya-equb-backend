@@ -131,7 +131,7 @@ const checkEqubRole = (allowedRoles) => {
 const isEqubAdmin = checkEqubRole(['admin']);
 
 // Middleware to check if user is collector or admin
-const isCollectorOrAdmin = checkEqubRole(['collector', 'admin']);
+const isCollectorOrAdmin = checkEqubRole(['collector', 'admin',"judge","writer"]);
 
 // Middleware to check if user is member (any role)
 const isEqubMember = checkEqubRole(['member', 'collector', 'judge', 'writer', 'admin']);
