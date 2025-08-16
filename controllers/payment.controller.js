@@ -98,11 +98,14 @@ const getPaymentHistory = async (req, res) => {
 // Process Payment
 const processPayment = async (req, res) => {
   try {
-    const { equbId, role, userId, roundNumber, paymentMethod, amount, notes } = req.body;
-    const processedBy = req.user._id;
+  const { equbId, role, userId, roundNumber, paymentMethod, amount, notes } = req.body;
+  const processedBy = req.user._id;
 
-    // Check if user has permission to process payments
-    if (!['collector', 'admin',"judge","writer"].includes(role)) {
+  // Prefer role from middleware (req.member) if present, otherwise fall back to body.role
+  const processorRole = req.member?.role || role;
+
+  // Check if user has permission to process payments
+  if (!['collector', 'admin', 'judge', 'writer'].includes(processorRole)) {
       return res.status(403).json({
         status: "error",
         error: {
@@ -124,8 +127,36 @@ const processPayment = async (req, res) => {
       });
     }
 
+    // Normalize target user id: support both custom userId (e.g. UXXXXXXXX) and Mongo _id
+    let targetUserObjectId = userId;
+    try {
+      // If userId looks like the app's custom userId (starts with 'U'), resolve to _id
+      if (typeof userId === 'string' && /^U[A-Z0-9]{9}$/.test(userId)) {
+        const targetUser = await User.findOne({ userId });
+        if (!targetUser) {
+          return res.status(404).json({
+            status: "error",
+            error: {
+              code: "equb/member-not-found",
+              message: "Member not found in this equb"
+            }
+          });
+        }
+        targetUserObjectId = targetUser._id.toString();
+      }
+    } catch (err) {
+      console.error('Error resolving target userId:', err);
+      return res.status(500).json({
+        status: "error",
+        error: {
+          code: "payment/resolve-user-failed",
+          message: "Failed to resolve userId"
+        }
+      });
+    }
+
     // Check if user is a member of this equb
-    const member = equb.members.find(m => m.userId.toString() === userId);
+    const member = equb.members.find(m => m.userId.toString() === targetUserObjectId.toString());
     if (!member) {
       return res.status(404).json({
         status: "error",
@@ -139,7 +170,7 @@ const processPayment = async (req, res) => {
     // Check if payment already exists for this round
     let payment = await Payment.findOne({
       equbId: equb._id,
-      userId,
+      userId: targetUserObjectId,
       roundNumber
     });
 
@@ -158,7 +189,7 @@ const processPayment = async (req, res) => {
       payment = new Payment({
         paymentId: Payment.generatePaymentId(),
         equbId: equb._id,
-        userId,
+        userId: targetUserObjectId,
         roundNumber,
         amount: equb.saving,
         status: 'paid',
@@ -175,7 +206,7 @@ const processPayment = async (req, res) => {
     await payment.save();
 
     // Update equb member payment history
-    await equb.processPayment(userId, roundNumber, {
+  await equb.processPayment(targetUserObjectId, roundNumber, {
       status: 'paid',
       amount: amount,
       paymentMethod,
@@ -183,7 +214,7 @@ const processPayment = async (req, res) => {
     });
 
     // Create notification for member
-    await Notification.createEqubNotification(userId, equb._id, {
+  await Notification.createEqubNotification(targetUserObjectId, equb._id, {
       title: 'Payment Processed',
       message: `Your payment of ${amount} for round ${roundNumber} has been processed successfully`,
       priority: 'medium',
