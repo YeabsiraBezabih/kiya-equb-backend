@@ -15,6 +15,7 @@ module.exports = function (app) {
   app.use("/api/mobile/profile", profileRoutes);
   app.use("/api/mobile/notifications", notificationRoutes);
   app.use("/api/mobile/equb-creation", equbCreationRoutes);
+  app.use("/api/mobile/users", require("../routes/user.route"));
   app.use("/api/docs", require("../routes/api_documentation.route"));
   
 };
