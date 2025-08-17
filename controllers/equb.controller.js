@@ -548,7 +548,7 @@ const addMember = async (req, res) => {
 // Remove Member
 const removeMember = async (req, res) => {
   try {
-    const { equbId, userId } = req.body;
+    const { userId } = req.params;
     const adminUserId = req.user._id;
 
     // Check if user has admin role
@@ -606,7 +606,8 @@ const removeMember = async (req, res) => {
 // Update Member Role
 const updateMemberRole = async (req, res) => {
   try {
-    const { equbId, userId, role } = req.body;
+    const { userId } = req.params;
+    const { role } = req.body;
     const adminUserId = req.user._id;
 
     // Check if user has admin role

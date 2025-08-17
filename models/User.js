@@ -129,7 +129,7 @@ userSchema.virtual('activeEqubs').get(function() {
 
 // Indexes
 userSchema.index({ phoneNumber: 1 });
-userSchema.index({ email: 1 });
+userSchema.index({ email: 1 }, { sparse: true }); // Allow multiple null values
 userSchema.index({ userId: 1 });
 userSchema.index({ referralId: 1 });
 

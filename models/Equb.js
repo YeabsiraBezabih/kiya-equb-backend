@@ -186,7 +186,7 @@ const equbSchema = new mongoose.Schema({
       },
       status: {
         type: String,
-        enum: ['paid', 'unpaid', 'pending'],
+        enum: ['paid', 'unpaid', 'pending', 'cancelled'],
         default: 'pending'
       },
       amountPaid: {

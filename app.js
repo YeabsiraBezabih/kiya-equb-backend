@@ -20,6 +20,8 @@ if (config.util.getEnv("NODE_ENV") !== "test") {
   app.use(morgan("combined"));
 }
 
+
+
 // Health check endpoint
 app.get("/health", (req, res) => {
   res.status(200).json({
@@ -31,6 +33,8 @@ app.get("/health", (req, res) => {
   });
 });
 
+
+
 // 404 handler
 app.use("*", (req, res) => {
   res.status(404).json({
@@ -41,6 +45,10 @@ app.use("*", (req, res) => {
     },
   });
 });
+
+// Error logging middleware
+const { errorLogger } = require('./middleware/request-logger');
+app.use(errorLogger);
 
 // Use dynamic port configuration
 const port = config.get("server.port") || process.env.PORT || 3001;

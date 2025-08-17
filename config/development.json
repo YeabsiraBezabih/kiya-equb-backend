@@ -4,7 +4,7 @@
     "host": "localhost"
   },
   "database": {
-    "url": "mongodb://localhost:27017/ekub-app-dev",
+    "url": "mongodb://ekub_user:ekub_password@localhost:27021/ekub-app",
     "options": {
       "useNewUrlParser": true,
       "useUnifiedTopology": true,

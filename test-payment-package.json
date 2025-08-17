@@ -1,0 +1,46 @@
+{
+  "name": "ekub-payment-tests",
+  "version": "1.0.0",
+  "description": "Comprehensive test suite for Ekub Backend Payment API endpoints",
+  "main": "test-payment.js",
+  "scripts": {
+    "test": "node test-payment.js",
+    "test:all": "node run-payment-tests.js all",
+    "test:history": "node run-payment-tests.js history",
+    "test:process": "node run-payment-tests.js process",
+    "test:unpaid": "node run-payment-tests.js unpaid",
+    "test:summary": "node run-payment-tests.js summary",
+    "test:mark-unpaid": "node run-payment-tests.js mark-unpaid",
+    "test:cancel": "node run-payment-tests.js cancel",
+    "test:rate-limit": "node run-payment-tests.js rate-limit",
+    "test:auth": "node run-payment-tests.js auth",
+    "test:edge-cases": "node run-payment-tests.js edge-cases",
+    "help": "node run-payment-tests.js help"
+  },
+  "keywords": [
+    "ekub",
+    "payment",
+    "api",
+    "testing",
+    "nodejs",
+    "express",
+    "mongodb"
+  ],
+  "author": "Ekub Development Team",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "your-repository-url"
+  },
+  "bugs": {
+    "url": "your-repository-url/issues"
+  },
+  "homepage": "your-repository-url#readme"
+}

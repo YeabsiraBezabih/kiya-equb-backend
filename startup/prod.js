@@ -49,6 +49,15 @@ module.exports = function (app) {
   app.use(express.json({ limit: "10mb" }));
   app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
+  // Request logging middleware
+  try {
+    const { consoleRequestLogger } = require('../middleware/request-logger');
+    app.use(consoleRequestLogger);
+    console.log('✅ Request logging middleware loaded successfully');
+  } catch (error) {
+    console.error('❌ Failed to load request logging middleware:', error.message);
+  }
+
   // Rate limiting
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes

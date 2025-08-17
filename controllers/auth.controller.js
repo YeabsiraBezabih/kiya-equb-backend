@@ -494,8 +494,22 @@ const changePassword = async (req, res) => {
       });
     }
 
+    // Fetch user with password field for comparison
+    const User = require("../models/User");
+    const userWithPassword = await User.findById(req.user._id);
+    
+    if (!userWithPassword) {
+      return res.status(404).json({
+        status: "error",
+        error: {
+          code: "auth/user-not-found",
+          message: "User not found"
+        }
+      });
+    }
+
     // Verify current password
-    const isCurrentPasswordValid = await req.user.comparePassword(currentPassword);
+    const isCurrentPasswordValid = await userWithPassword.comparePassword(currentPassword);
     if (!isCurrentPasswordValid) {
       return res.status(400).json({
         status: "error",
@@ -507,15 +521,15 @@ const changePassword = async (req, res) => {
     }
 
     // Update password
-    req.user.password = newPassword;
-    await req.user.save();
+    userWithPassword.password = newPassword;
+    await userWithPassword.save();
 
     // Clear all refresh tokens (force re-login)
-    req.user.refreshTokens = [];
-    await req.user.save();
+    userWithPassword.refreshTokens = [];
+    await userWithPassword.save();
 
     // Create notification
-    await Notification.createSystemNotification(req.user._id, {
+    await Notification.createSystemNotification(userWithPassword._id, {
       title: 'Password Changed',
       message: 'Your password has been successfully changed.',
       priority: 'medium'

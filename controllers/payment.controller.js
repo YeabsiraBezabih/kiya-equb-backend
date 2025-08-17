@@ -43,9 +43,9 @@ const getPaymentHistory = async (req, res) => {
     const formattedPayments = payments.map(payment => ({
       paymentId: payment.paymentId,
       roundNumber: payment.roundNumber,
-      date: payment.date,
+      date: payment.processedAt,
       status: payment.status,
-      amountPaid: payment.amountPaid,
+      amountPaid: payment.amount,
       paymentMethod: payment.paymentMethod,
       userId: payment.userId._id,
       userName: payment.userId.fullName,
@@ -58,7 +58,7 @@ const getPaymentHistory = async (req, res) => {
     const summary = {
       totalPaid: allPayments
         .filter(p => p.status === 'paid')
-        .reduce((sum, p) => sum + p.amountPaid, 0),
+        .reduce((sum, p) => sum + p.amount, 0),
       totalUnpaid: allPayments
         .filter(p => p.status === 'unpaid')
         .reduce((sum, p) => sum + p.amount, 0),
@@ -93,6 +93,142 @@ const getPaymentHistory = async (req, res) => {
       }
     });
   }
+};
+
+// Get User Payment History
+const getUserPaymentHistory = async (req, res) => {
+  try {
+    const { equbId, userId } = req.params;
+    const { page = 1, limit = 20 } = req.query;
+    const currentUserId = req.user._id;
+
+    // Check if user is a member of this equb
+    const equb = await Equb.findOne({ equbId, 'members.userId': currentUserId });
+    if (!equb) {
+      return res.status(403).json({
+        status: "error",
+        error: {
+          code: "equb/not-member",
+          message: "You are not a member of this equb"
+        }
+      });
+    }
+
+    // Check if the target user is a member of this equb
+    // Try to find user by userId (user ID code) first, then by ObjectId
+    let targetUser = await User.findOne({ userId: userId });
+    if (!targetUser) {
+      // If not found by userId, try to find by ObjectId
+      try {
+        targetUser = await User.findById(userId);
+      } catch (error) {
+        // If userId is not a valid ObjectId, this will fail - that's expected
+        targetUser = null;
+      }
+    }
+    if (!targetUser) {
+      return res.status(404).json({
+        status: "error",
+        error: {
+          code: "user/not-found",
+          message: "User not found"
+        }
+      });
+    }
+
+    // Check if the target user is a member of this equb
+    const isTargetUserMember = equb.members.some(member => member.userId.toString() === targetUser._id.toString());
+    if (!isTargetUserMember) {
+      return res.status(403).json({
+        status: "error",
+        error: {
+          code: "equb/user-not-member",
+          message: "Target user is not a member of this equb"
+        }
+      });
+    }
+
+    // Get total count for this specific user
+    const total = await Payment.countDocuments({ 
+      equbId: equb._id, 
+      userId: targetUser._id 
+    });
+    const totalPages = Math.ceil(total / limit);
+
+    // Get payments for this specific user with pagination
+    const payments = await Payment.find({ 
+      equbId: equb._id, 
+      userId: targetUser._id 
+    })
+      .populate('userId', 'fullName')
+      .populate('equbId', 'name equbId')
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+
+    // Format payment data
+    const formattedPayments = payments.map(payment => ({
+      paymentId: payment.paymentId,
+      equbId: payment.equbId?.equbId || payment.equbId,
+      userId: payment.userId?._id || payment.userId,
+      userName: payment.userId?.fullName || 'Unknown User',
+      roundNumber: payment.roundNumber,
+      amount: payment.amount,
+      paymentMethod: payment.paymentMethod,
+      status: payment.status,
+      notes: payment.notes,
+      processedBy: payment.processedBy,
+      processedAt: payment.processedAt,
+      updatedAt: payment.updatedAt
+    }));
+
+    // Get user's member info
+    const memberInfo = equb.members.find(m => m.userId.toString() === targetUser._id.toString());
+    const userSummary = {
+      userId: targetUser.userId || targetUser._id,
+      userName: targetUser.fullName,
+      formNumber: memberInfo?.formNumber || 0,
+      participationType: memberInfo?.participationType || 'full',
+      role: memberInfo?.role || 'member',
+      totalPayments: total,
+      totalPaid: payments.filter(p => p.status === 'paid').length,
+      totalUnpaid: payments.filter(p => p.status === 'unpaid').length,
+      totalCancelled: payments.filter(p => p.status === 'cancelled').length,
+      totalAmount: payments.reduce((sum, p) => sum + p.amount, 0)
+    };
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        user: userSummary,
+        payments: formattedPayments,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          totalPages,
+          hasNext: page < totalPages,
+          hasPrev: page > 1
+        }
+      }
+    });
+
+        } catch (error) {
+        console.error('Get user payment history error:', error);
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          userId: req.params.userId,
+          equbId: req.params.equbId
+        });
+        res.status(500).json({
+          status: "error",
+          error: {
+            code: "payment/user-history-failed",
+            message: "Failed to get user payment history"
+          }
+        });
+      }
 };
 
 // Process Payment
@@ -532,6 +668,7 @@ const cancelPayment = async (req, res) => {
 
 module.exports = {
   getPaymentHistory,
+  getUserPaymentHistory,
   processPayment,
   getUnpaidMembers,
   getPaymentSummary,

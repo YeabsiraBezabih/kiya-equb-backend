@@ -16,6 +16,7 @@ router.use('/process-payment', paymentRateLimit);
 
 // Payment history and summary (requires equb membership)
 router.get('/:equbId/payment-history', isEqubMember, validatePaymentHistory, paymentController.getPaymentHistory);
+router.get('/:equbId/:userId/payment-history', isEqubMember, paymentController.getUserPaymentHistory);
 router.get('/:equbId/unpaid-members', isEqubMember, validateUnpaidMembers, paymentController.getUnpaidMembers);
 router.get('/:equbId/payment-summary', isEqubMember, paymentController.getPaymentSummary);
 

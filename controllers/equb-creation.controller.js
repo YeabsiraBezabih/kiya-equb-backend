@@ -2,6 +2,7 @@ const Equb = require("../models/Equb");
 const User = require("../models/User");
 const Notification = require("../models/Notification");
 const config = require("config");
+const mongoose = require("mongoose");
 
 // Create new Ekub
 const createEqub = async (req, res) => {
@@ -55,10 +56,14 @@ const createEqub = async (req, res) => {
 
         // If user doesn't exist, create new user
         if (!user) {
+          // Generate a unique email to avoid duplicate key constraint
+          const uniqueEmail = `test.${Date.now()}.${Math.random().toString(36).substr(2, 9)}@test.com`;
+          
           user = new User({
             userId: User.generateUserId(),
             fullName: collector.fullName,
             phoneNumber: collector.phoneNumber,
+            email: uniqueEmail,
             password: collector.password || "defaultPassword123", // You might want to generate a random password
             isActive: true,
             isVerified: false, // Will need verification later
@@ -85,10 +90,14 @@ const createEqub = async (req, res) => {
 
         // If user doesn't exist, create new user
         if (!user) {
+          // Generate a unique email to avoid duplicate key constraint
+          const uniqueEmail = `test.${Date.now()}.${Math.random().toString(36).substr(2, 9)}@test.com`;
+          
           user = new User({
             userId: User.generateUserId(),
             fullName: judge.fullName,
             phoneNumber: judge.phoneNumber,
+            email: uniqueEmail,
             password: judge.password || "defaultPassword123",
             isActive: true,
             isVerified: false,
@@ -115,10 +124,14 @@ const createEqub = async (req, res) => {
 
         // If user doesn't exist, create new user
         if (!user) {
+          // Generate a unique email to avoid duplicate key constraint
+          const uniqueEmail = `test.${Date.now()}.${Math.random().toString(36).substr(2, 9)}@test.com`;
+          
           user = new User({
             userId: User.generateUserId(),
             fullName: writer.fullName,
             phoneNumber: writer.phoneNumber,
+            email: uniqueEmail,
             password: writer.password || "defaultPassword123",
             isActive: true,
             isVerified: false,
@@ -210,7 +223,7 @@ const getMyCreatedEqubs = async (req, res) => {
 
     const equbs = await Equb.find({ createdBy: userId })
       .select(
-        "name equbId maxMembers saving roundDuration level createdAt"
+        "_id name equbId maxMembers saving roundDuration level createdAt"
       )
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
@@ -251,6 +264,17 @@ const getEqubCreationDetails = async (req, res) => {
     const { equbId } = req.params;
     const userId = req.user._id;
 
+    // Validate ObjectId format
+    if (!mongoose.Types.ObjectId.isValid(equbId)) {
+      return res.status(400).json({
+        status: "error",
+        error: {
+          code: "equb-creation/invalid-id",
+          message: "Invalid Equb ID format",
+        },
+      });
+    }
+
     const equb = await Equb.findById(equbId)
       .populate("members.userId", "fullName phoneNumber profilePicture")
       .populate("createdBy", "fullName phoneNumber profilePicture");
@@ -289,21 +313,21 @@ const getEqubCreationDetails = async (req, res) => {
           _id: equb._id,
           equbId: equb.equbId,
           name: equb.name,
-          status: equb.status,
-          currentMembers: equb.currentMembers,
+          status: equb.isActive ? 'active' : 'inactive',
+          currentMembers: equb.members.length,
           maxMembers: equb.maxMembers,
-          perMemberAmount: equb.perMemberAmount,
-          totalAmount: equb.totalAmount,
+          perMemberAmount: equb.saving,
+          totalAmount: equb.saving * equb.maxMembers,
           roundDuration: equb.roundDuration,
           level: equb.level,
           startDate: equb.startDate,
-          bankAccountDetail: equb.bankAccountDetail,
+          bankAccountDetail: equb.bankAccountDetail || [],
           privacyPolicy: equb.privacyPolicy,
           creator: {
-            _id: equb.creatorId._id,
-            fullName: equb.creatorId.fullName,
-            phoneNumber: equb.creatorId.phoneNumber,
-            profilePicture: equb.creatorId.profilePicture,
+            _id: equb.createdBy._id,
+            fullName: equb.createdBy.fullName,
+            phoneNumber: equb.createdBy.phoneNumber,
+            profilePicture: equb.createdBy.profilePicture,
           },
           members: equb.members.map((member) => ({
             _id: member.userId._id,
@@ -311,7 +335,7 @@ const getEqubCreationDetails = async (req, res) => {
             phoneNumber: member.userId.phoneNumber,
             profilePicture: member.userId.profilePicture,
             role: member.role,
-            joinedAt: member.joinedAt,
+            joinedAt: member.joinedDate,
             isActive: member.isActive,
           })),
           createdAt: equb.createdAt,

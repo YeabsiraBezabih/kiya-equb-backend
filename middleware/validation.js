@@ -131,8 +131,6 @@ const equbSchemas = {
   }),
   
   updateMemberRole: Joi.object({
-    equbId: commonSchemas.equbId.required(),
-    userId: commonSchemas.userId.required(),
     role: Joi.string().valid('member', 'collector', 'judge', 'writer', 'admin').required()
   }),
 
@@ -142,7 +140,10 @@ const equbSchemas = {
     totalSaving: Joi.number().min(1000).max(500000).required(),
     duration: Joi.string().valid('daily', 'weekly', 'monthly').required(),
     level: Joi.string().valid('old', 'new').required(),
-    startDate: Joi.date().required(),
+    startDate: Joi.alternatives().try(
+      Joi.date(),
+      Joi.string().isoDate()
+    ).required(),
     bankAccountDetail: Joi.array().items(
       Joi.object({
         bankName: Joi.string().min(2).max(100).required(),

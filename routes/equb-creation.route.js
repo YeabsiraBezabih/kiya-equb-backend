@@ -1,13 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, equbCreationRateLimit } = require('../middleware/auth');
 const { validateEqubCreation } = require('../middleware/validation');
 const equbCreationController = require('../controllers/equb-creation.controller');
 const upload = require('../middleware/upload');
 
-// Create new Ekub
+// Create new Ekub (with rate limiting)
 router.post('/create', 
-  authenticateToken,
+  authenticateToken, // Authentication first
+  equbCreationRateLimit, // Then rate limiting
   upload.single('privacyPolicy'), 
   validateEqubCreation, 
   equbCreationController.createEqub

@@ -1,0 +1,27 @@
+{
+  "name": "ekub-backend-auth-tests",
+  "version": "1.0.0",
+  "description": "Authentication API test suite for Ekub Backend",
+  "main": "test-auth.js",
+  "scripts": {
+    "test": "node test-auth.js",
+    "test:auth": "node test-auth.js",
+    "install-deps": "npm install axios"
+  },
+  "keywords": [
+    "testing",
+    "authentication",
+    "api",
+    "ekub",
+    "backend"
+  ],
+  "author": "Ekub Development Team",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

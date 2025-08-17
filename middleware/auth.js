@@ -2,6 +2,9 @@ const jwt = require("jsonwebtoken");
 const config = require("config");
 const User = require("../models/User");
 
+// ⚠️ TESTING MODE: Rate limits are set very high for testing purposes
+// Remember to change these back to production values before deployment!
+
 // Middleware to verify JWT token
 const authenticateToken = async (req, res, next) => {
   try {
@@ -72,8 +75,19 @@ const authenticateToken = async (req, res, next) => {
 const checkEqubRole = (allowedRoles) => {
   return async (req, res, next) => {
     try {
-      const { equbId } = req.body;
+      // Check both req.body and req.params for equbId
+      const equbId = req.body.equbId || req.params.equbId;
       const userId = req.user._id;
+
+      if (!equbId) {
+        return res.status(400).json({
+          status: "error",
+          error: {
+            code: "validation/missing-field",
+            message: "Equb ID is required",
+          },
+        });
+      }
 
       // Find the equb and check user's role
       const Equb = require("../models/Equb");
@@ -215,9 +229,11 @@ const requireVerification = async (req, res, next) => {
 };
 
 // Rate limiting for authentication endpoints
+// For production, use: max: 10
+// For testing, use: max: 100
 const authRateLimit = require("express-rate-limit")({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 requests per windowMs
+  windowMs: 60 * 1000, // 1 minute
+  max: 1000, // limit each IP to 1000 requests per minute (very permissive for testing)
   message: {
     status: "error",
     error: {
@@ -229,15 +245,45 @@ const authRateLimit = require("express-rate-limit")({
   legacyHeaders: false,
 });
 
+// Alternative: Very permissive rate limit for development/testing only
+// const authRateLimit = require("express-rate-limit")({
+//   windowMs: 15 * 60 * 1000, // 15 minutes
+//   max: 1000, // limit each IP to 1000 requests per windowMs (development only)
+//   message: {
+//     status: "error",
+//     error: {
+//       code: "rate-limit/auth-exceeded",
+//     message: "Too many authentication attempts, please try again later",
+//     },
+//   },
+//   standardHeaders: true,
+//   legacyHeaders: false,
+// });
+
 // Rate limiting for payment endpoints
 const paymentRateLimit = require("express-rate-limit")({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // limit each IP to 10 requests per windowMs
+  max: 1000, // limit each IP to 1000 requests per 15 minutes (very permissive for testing)
   message: {
     status: "error",
     error: {
       code: "rate-limit/payment-exceeded",
       message: "Too many payment requests, please try again later",
+    },
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Rate limiting for Equb creation operations (more restrictive)
+const equbCreationRateLimit = require("express-rate-limit")({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10, // limit each IP to 10 requests per minute for Equb creation (increased for testing)
+  message: {
+    status: "error",
+    error: {
+      code: "rate-limit/equb-creation-exceeded",
+      message: "Too many Equb creation requests, please try again later",
     },
   },
   standardHeaders: true,
@@ -254,4 +300,5 @@ module.exports = {
   requireVerification,
   authRateLimit,
   paymentRateLimit,
+  equbCreationRateLimit,
 };
