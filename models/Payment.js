@@ -108,7 +108,6 @@ paymentSchema.virtual('statusDisplay').get(function() {
 });
 
 // Indexes
-paymentSchema.index({ paymentId: 1 });
 paymentSchema.index({ equbId: 1 });
 paymentSchema.index({ userId: 1 });
 paymentSchema.index({ roundNumber: 1 });

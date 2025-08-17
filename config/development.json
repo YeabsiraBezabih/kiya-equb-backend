@@ -6,8 +6,6 @@
   "database": {
     "url": "mongodb://ekub_user:ekub_password@localhost:27021/ekub-app",
     "options": {
-      "useNewUrlParser": true,
-      "useUnifiedTopology": true,
       "maxPoolSize": 5,
       "serverSelectionTimeoutMS": 5000,
       "socketTimeoutMS": 30000,

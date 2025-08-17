@@ -4,8 +4,6 @@ const equbRoutes = require("../routes/equb.route");
 const paymentRoutes = require("../routes/payment.route");
 const profileRoutes = require("../routes/profile.route");
 const notificationRoutes = require("../routes/notification.route");
-const equbCreationRoutes = require("../routes/equb-creation.route");
-
 module.exports = function (app) {
   // API Routes
   app.use("/", landingRoutes);
@@ -14,7 +12,6 @@ module.exports = function (app) {
   app.use("/api/mobile/payments", paymentRoutes);
   app.use("/api/mobile/profile", profileRoutes);
   app.use("/api/mobile/notifications", notificationRoutes);
-  app.use("/api/mobile/equb-creation", equbCreationRoutes);
   app.use("/api/mobile/users", require("../routes/user.route"));
   app.use("/api/docs", require("../routes/api_documentation.route"));
   

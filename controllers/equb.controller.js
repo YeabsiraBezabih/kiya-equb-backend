@@ -313,10 +313,10 @@ const getEqubDetails = async (req, res) => {
 
     const equb = await Equb.findOne({ equbId, isActive: true })
       .populate("createdBy", "fullName phoneNumber")
-      .populate("members.userId", "fullName phoneNumber")
-      .populate("collectorsInfo.userId", "fullName phoneNumber")
-      .populate("judgInfo.userId", "fullName phoneNumber")
-      .populate("writersInfo.userId", "fullName phoneNumber");
+      .populate("members.userId", "fullName phoneNumber userId")
+      .populate("collectorsInfo.userId", "fullName phoneNumber userId")
+      .populate("judgInfo.userId", "fullName phoneNumber userId")
+      .populate("writersInfo.userId", "fullName phoneNumber userId");
 
     if (!equb) {
       return res.status(404).json({
@@ -372,21 +372,25 @@ const getEqubDetails = async (req, res) => {
       bankAccountDetail: equb.bankAccountDetail,
       collectorsInfo: equb.collectorsInfo.map((collector) => ({
         userId: collector.userId._id,
+        customUserId: collector.userId.userId,
         name: collector.userId.fullName,
         phone: collector.userId.phoneNumber,
       })),
       judgInfo: equb.judgInfo.map((judge) => ({
         userId: judge.userId._id,
+        customUserId: judge.userId.userId,
         name: judge.userId.fullName,
         phone: judge.userId.phoneNumber,
       })),
       writersInfo: equb.writersInfo.map((writer) => ({
         userId: writer.userId._id,
+        customUserId: writer.userId.userId,
         name: writer.userId.fullName,
         phone: writer.userId.phoneNumber,
       })),
       members: equb.members.map((member) => ({
         userId: member.userId._id,
+        customUserId: member.userId.userId,
         name: member.userId.fullName,
         participationType: member.participationType,
         formNumber: member.formNumber,
@@ -562,11 +566,35 @@ const removeMember = async (req, res) => {
       });
     }
 
+    // Find user by custom userId to get MongoDB ObjectId
+    const user = await User.findByUserId(userId);
+    if (!user) {
+      return res.status(404).json({
+        status: "error",
+        error: {
+          code: "equb/user-not-found",
+          message: "User not found",
+        },
+      });
+    }
+
+    const userObjectId = user._id;
+
     // Check if trying to remove admin
     const memberToRemove = req.equb.members.find(
-      (m) => m.userId.toString() === userId
+      (m) => m.userId.toString() === userObjectId.toString()
     );
-    if (memberToRemove && memberToRemove.role === "admin") {
+    if (!memberToRemove) {
+      return res.status(404).json({
+        status: "error",
+        error: {
+          code: "equb/member-not-found",
+          message: "User is not a member of this equb",
+        },
+      });
+    }
+
+    if (memberToRemove.role === "admin") {
       return res.status(400).json({
         status: "error",
         error: {
@@ -576,11 +604,11 @@ const removeMember = async (req, res) => {
       });
     }
 
-    // Remove member
-    await req.equb.removeMember(userId);
+    // Remove member using MongoDB ObjectId
+    await req.equb.removeMember(userObjectId);
 
     // Create notification for removed member
-    await Notification.createEqubNotification(userId, req.equb._id, {
+    await Notification.createEqubNotification(userObjectId, req.equb._id, {
       title: "Removed from Equb",
       message: `You have been removed from ${req.equb.name}`,
       priority: "high",
@@ -621,11 +649,35 @@ const updateMemberRole = async (req, res) => {
       });
     }
 
+    // Find user by custom userId to get MongoDB ObjectId
+    const user = await User.findByUserId(userId);
+    if (!user) {
+      return res.status(404).json({
+        status: "error",
+        error: {
+          code: "equb/user-not-found",
+          message: "User not found",
+        },
+      });
+    }
+
+    const userObjectId = user._id;
+
     // Check if trying to update admin role
     const memberToUpdate = req.equb.members.find(
-      (m) => m.userId.toString() === userId
+      (m) => m.userId.toString() === userObjectId.toString()
     );
-    if (memberToUpdate && memberToUpdate.role === "admin") {
+    if (!memberToUpdate) {
+      return res.status(404).json({
+        status: "error",
+        error: {
+          code: "equb/member-not-found",
+          message: "User is not a member of this equb",
+        },
+      });
+    }
+
+    if (memberToUpdate.role === "admin") {
       return res.status(400).json({
         status: "error",
         error: {
@@ -635,11 +687,11 @@ const updateMemberRole = async (req, res) => {
       });
     }
 
-    // Update member role
-    await req.equb.updateMemberRole(userId, role);
+    // Update member role using MongoDB ObjectId
+    await req.equb.updateMemberRole(userObjectId, role);
 
     // Create notification for member
-    await Notification.createEqubNotification(userId, req.equb._id, {
+    await Notification.createEqubNotification(userObjectId, req.equb._id, {
       title: "Role Updated",
       message: `Your role in ${req.equb.name} has been updated to ${role}`,
       priority: "medium",
@@ -662,6 +714,735 @@ const updateMemberRole = async (req, res) => {
   }
 };
 
+// Get Equb Members
+const getEqubMembers = async (req, res) => {
+  try {
+    const { equbId } = req.params;
+    const userId = req.user._id;
+
+    const equb = await Equb.findOne({ equbId, isActive: true })
+      .populate('members.userId', 'fullName phoneNumber');
+
+    if (!equb) {
+      return res.status(404).json({
+        status: "error",
+        error: {
+          code: "equb/not-found",
+          message: "Equb not found",
+        },
+      });
+    }
+
+    // Check if user is a member
+    const isMember = equb.members.find(
+      (m) => m.userId._id.toString() === userId.toString()
+    );
+    if (!isMember) {
+      return res.status(403).json({
+        status: "error",
+        error: {
+          code: "equb/not-member",
+          message: "You are not a member of this equb",
+        },
+      });
+    }
+
+    const members = equb.members.map(member => ({
+      userId: member.userId._id,
+      name: member.userId.fullName,
+      participationType: member.participationType,
+      formNumber: member.formNumber,
+      role: member.role,
+      phone: member.userId.phoneNumber,
+      isActive: member.isActive
+    }));
+
+    res.status(200).json({
+      status: "success",
+      data: members,
+    });
+  } catch (error) {
+    console.error("Get equb members error:", error);
+    res.status(500).json({
+      status: "error",
+      error: {
+        code: "equb/get-members-failed",
+        message: "Failed to get equb members",
+      },
+    });
+  }
+};
+
+// Get Member Payment History
+const getMemberPaymentHistory = async (req, res) => {
+  try {
+    const { equbId, memberId } = req.params;
+    const userId = req.user._id;
+
+    const equb = await Equb.findOne({ equbId, isActive: true })
+      .populate('members.userId', 'fullName phoneNumber');
+
+    if (!equb) {
+      return res.status(404).json({
+        status: "error",
+        error: {
+          code: "equb/not-found",
+          message: "Equb not found",
+        },
+      });
+    }
+
+    // Check if user is a member
+    const isMember = equb.members.find(
+      (m) => m.userId._id.toString() === userId.toString()
+    );
+    if (!isMember) {
+      return res.status(403).json({
+        status: "error",
+        error: {
+          code: "equb/not-member",
+          message: "You are not a member of this equb",
+        },
+      });
+    }
+
+    // Find the specific member
+    const member = equb.members.find(
+      (m) => m.userId._id.toString() === memberId
+    );
+    if (!member) {
+      return res.status(404).json({
+        status: "error",
+        error: {
+          code: "member/not-found",
+          message: "Member not found",
+        },
+      });
+    }
+
+    const memberData = {
+      userId: member.userId._id,
+      name: member.userId.fullName,
+      participationType: member.participationType,
+      formNumber: member.formNumber,
+      role: member.role
+    };
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        member: memberData,
+        paymentHistory: member.paymentHistory
+      },
+    });
+  } catch (error) {
+    console.error("Get member payment history error:", error);
+    res.status(500).json({
+      status: "error",
+      error: {
+        code: "equb/get-member-history-failed",
+        message: "Failed to get member payment history",
+      },
+    });
+  }
+};
+
+// Get Unpaid Members
+const getUnpaidMembers = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Get all equbs where user is a member
+    const equbs = await Equb.find({
+      "members.userId": userId,
+      "members.isActive": true,
+    }).populate('members.userId', 'fullName phoneNumber');
+
+    const unpaidMembers = [];
+
+    for (const equb of equbs) {
+      const currentRound = equb.currentRound;
+      
+      for (const member of equb.members) {
+        if (member.isActive) {
+          const currentRoundPayment = member.paymentHistory.find(
+            (p) => p.roundNumber === currentRound
+          );
+          
+          if (!currentRoundPayment || currentRoundPayment.status !== 'paid') {
+            const paidRounds = member.paymentHistory.filter(p => p.status === 'paid').length;
+            const unpaidRounds = currentRound - paidRounds;
+            
+            unpaidMembers.push({
+              userId: member.userId._id,
+              name: member.userId.fullName,
+              unpaidRounds,
+              formNumber: member.formNumber,
+              phone: member.userId.phoneNumber,
+              paidRounds,
+              equbId: equb.equbId,
+              equbName: equb.name
+            });
+          }
+        }
+      }
+    }
+
+    res.status(200).json({
+      status: "success",
+      data: unpaidMembers,
+    });
+  } catch (error) {
+    console.error("Get unpaid members error:", error);
+    res.status(500).json({
+      status: "error",
+      error: {
+        code: "equb/get-unpaid-members-failed",
+        message: "Failed to get unpaid members",
+      },
+    });
+  }
+};
+
+// Get Round Winners
+const getRoundWinners = async (req, res) => {
+  try {
+    const { equbId } = req.params;
+    const userId = req.user._id;
+
+    const equb = await Equb.findOne({ equbId, isActive: true })
+      .populate('members.userId', 'fullName phoneNumber');
+
+    if (!equb) {
+      return res.status(404).json({
+        status: "error",
+        error: {
+          code: "equb/not-found",
+          message: "Equb not found",
+        },
+      });
+    }
+
+    // Check if user is a member
+    const isMember = equb.members.find(
+      (m) => m.userId._id.toString() === userId.toString()
+    );
+    if (!isMember) {
+      return res.status(403).json({
+        status: "error",
+        error: {
+          code: "equb/not-member",
+          message: "You are not a member of this equb",
+        },
+      });
+    }
+
+    const roundWinners = equb.roundWinners.map(round => {
+      const winners = round.winnerFormNumbers.map(formNumber => {
+        const member = equb.members.find(m => m.formNumber === formNumber);
+        if (member) {
+          const paidRounds = member.paymentHistory.filter(p => p.status === 'paid').length;
+          const unpaidRounds = equb.currentRound - paidRounds;
+          
+          return {
+            name: member.userId.fullName,
+            phone: member.userId.phoneNumber,
+            formNumber: member.formNumber,
+            unpaidRounds,
+            paidRounds,
+            participationType: member.participationType
+          };
+        }
+        return null;
+      }).filter(Boolean);
+
+      return {
+        roundNumber: round.roundNumber,
+        winners
+      };
+    });
+
+    res.status(200).json({
+      status: "success",
+      data: roundWinners,
+    });
+  } catch (error) {
+    console.error("Get round winners error:", error);
+    res.status(500).json({
+      status: "error",
+      error: {
+        code: "equb/get-winners-failed",
+        message: "Failed to get round winners",
+      },
+    });
+  }
+};
+
+// Update Equb
+const updateEqub = async (req, res) => {
+  try {
+    const { equbId } = req.params;
+    const { collectorsInfo, judgInfo, writersInfo } = req.body;
+    const userId = req.user._id;
+
+    const equb = await Equb.findOne({ equbId, isActive: true });
+
+    if (!equb) {
+      return res.status(404).json({
+        status: "error",
+        error: {
+          code: "equb/not-found",
+          message: "Equb not found",
+        },
+      });
+    }
+
+    // Check if user is admin
+    const member = equb.members.find(
+      (m) => m.userId.toString() === userId.toString()
+    );
+    if (!member || member.role !== 'admin') {
+      return res.status(403).json({
+        status: "error",
+        error: {
+          code: "equb/insufficient-permissions",
+          message: "Only admins can update equb information",
+        },
+      });
+    }
+
+    // Update equb information
+    if (collectorsInfo) equb.collectorsInfo = collectorsInfo;
+    if (judgInfo) equb.judgInfo = judgInfo;
+    if (writersInfo) equb.writersInfo = writersInfo;
+
+    await equb.save();
+
+    res.status(200).json({
+      status: "success",
+      message: "Equb updated successfully",
+      data: {
+        equbId: equb.equbId,
+        collectorsInfo: equb.collectorsInfo,
+        judgInfo: equb.judgInfo,
+        writersInfo: equb.writersInfo
+      },
+    });
+  } catch (error) {
+    console.error("Update equb error:", error);
+    res.status(500).json({
+      status: "error",
+      error: {
+        code: "equb/update-failed",
+        message: "Failed to update equb",
+      },
+    });
+  }
+};
+
+// Post Round Winner
+const postRoundWinner = async (req, res) => {
+  try {
+    const { equbId } = req.params;
+    const { formNumbers, participationType } = req.body;
+    const userId = req.user._id;
+
+    const equb = await Equb.findOne({ equbId, isActive: true });
+
+    if (!equb) {
+      return res.status(404).json({
+        status: "error",
+        error: {
+          code: "equb/not-found",
+          message: "Equb not found",
+        },
+      });
+    }
+
+    // Check if user is admin
+    const member = equb.members.find(
+      (m) => m.userId.toString() === userId.toString()
+    );
+    if (!member || member.role !== 'admin') {
+      return res.status(403).json({
+        status: "error",
+        error: {
+          code: "equb/insufficient-permissions",
+          message: "Only admins can post round winners",
+        },
+      });
+    }
+
+    // Validate form numbers exist in equb
+    for (const formNumber of formNumbers) {
+      const memberExists = equb.members.find(m => m.formNumber === formNumber);
+      if (!memberExists) {
+        return res.status(400).json({
+          status: "error",
+          error: {
+            code: "equb/invalid-form-number",
+            message: `Form number ${formNumber} does not exist in this equb`,
+          },
+        });
+      }
+    }
+
+    // Validate winner count based on participation type
+    const expectedWinnerCount = participationType === 'full' ? 1 : 
+                               participationType === 'half' ? 2 : 4;
+    
+    if (formNumbers.length !== expectedWinnerCount) {
+      return res.status(400).json({
+        status: "error",
+        error: {
+          code: "equb/invalid-winner-count",
+          message: `${participationType} participation requires exactly ${expectedWinnerCount} winner(s)`,
+        },
+      });
+    }
+
+    // Add to round winners
+    const roundWinner = {
+      roundNumber: equb.currentRound,
+      winnerFormNumbers: formNumbers,
+      participationType,
+      createdAt: new Date()
+    };
+
+    equb.roundWinners.push(roundWinner);
+    await equb.save();
+
+    res.status(200).json({
+      status: "success",
+      message: "Round winner posted successfully",
+      data: {
+        roundNumber: equb.currentRound,
+        winners: formNumbers.map(formNumber => ({
+          formNumber,
+          participationType
+        }))
+      },
+    });
+  } catch (error) {
+    console.error("Post round winner error:", error);
+    res.status(500).json({
+      status: "error",
+      error: {
+        code: "equb/post-winner-failed",
+        message: "Failed to post round winner",
+      },
+    });
+  }
+};
+
+// Create new Ekub
+const createEqub = async (req, res) => {
+  try {
+    const {
+      name,
+      numberOfMembers,
+      totalSaving,
+      duration,
+      level,
+      startDate,
+      bankAccountDetail,
+      collectorsInfo,
+      judgesInfo,
+      writersInfo,
+    } = req.body;
+
+    const creatorId = req.user._id;
+
+    // Calculate per-member amount
+    const perMemberAmount = Math.ceil(totalSaving / numberOfMembers);
+
+    // Create new Equb
+    const newEqub = new Equb({
+      name,
+      equbId: Equb.generateEqubId(),
+      createdBy: creatorId,
+      maxMembers: numberOfMembers,
+      saving: totalSaving,
+      roundDuration: duration,
+      level,
+      startDate,
+      bankAccountDetail: bankAccountDetail || [],
+      members: [
+        {
+          userId: creatorId,
+          name: req.user.fullName,
+          participationType: "full",
+          formNumber: 1,
+          role: "admin",
+          joinedDate: new Date(),
+          isActive: true,
+        },
+      ],
+    });
+
+    // Add collectors if provided
+    if (collectorsInfo && collectorsInfo.length > 0) {
+      for (const collector of collectorsInfo) {
+        let user = await User.findOne({ phoneNumber: collector.phoneNumber });
+
+        // If user doesn't exist, create new user
+        if (!user) {
+          // Generate a unique email to avoid duplicate key constraint
+          const uniqueEmail = `test.${Date.now()}.${Math.random().toString(36).substr(2, 9)}@test.com`;
+          
+          user = new User({
+            userId: User.generateUserId(),
+            fullName: collector.fullName,
+            phoneNumber: collector.phoneNumber,
+            email: uniqueEmail,
+            password: collector.password || "defaultPassword123", // You might want to generate a random password
+            isActive: true,
+            isVerified: false, // Will need verification later
+          });
+          await user.save();
+        }
+
+        newEqub.members.push({
+          userId: user._id,
+          name: collector.fullName,
+          participationType: "full",
+          formNumber: collector.formNumber || 1,
+          role: "collector",
+          joinedDate: new Date(),
+          isActive: true,
+        });
+      }
+    }
+
+    // Add judges if provided
+    if (judgesInfo && judgesInfo.length > 0) {
+      for (const judge of judgesInfo) {
+        let user = await User.findOne({ phoneNumber: judge.phoneNumber });
+
+        // If user doesn't exist, create new user
+        if (!user) {
+          // Generate a unique email to avoid duplicate key constraint
+          const uniqueEmail = `test.${Date.now()}.${Math.random().toString(36).substr(2, 9)}@test.com`;
+          
+          user = new User({
+            userId: User.generateUserId(),
+            fullName: judge.fullName,
+            phoneNumber: judge.phoneNumber,
+            email: uniqueEmail,
+            password: judge.password || "defaultPassword123",
+            isActive: true,
+            isVerified: false,
+          });
+          await user.save();
+        }
+
+        newEqub.members.push({
+          userId: user._id,
+          name: judge.fullName,
+          participationType: "full",
+          formNumber: judge.formNumber || 1,
+          role: "judge",
+          joinedDate: new Date(),
+          isActive: true,
+        });
+      }
+    }
+
+    // Add writers if provided
+    if (writersInfo && writersInfo.length > 0) {
+      for (const writer of writersInfo) {
+        let user = await User.findOne({ phoneNumber: writer.phoneNumber });
+
+        // If user doesn't exist, create new user
+        if (!user) {
+          // Generate a unique email to avoid duplicate key constraint
+          const uniqueEmail = `test.${Date.now()}.${Math.random().toString(36).substr(2, 9)}@test.com`;
+          
+          user = new User({
+            userId: User.generateUserId(),
+            fullName: writer.fullName,
+            phoneNumber: writer.phoneNumber,
+            email: uniqueEmail,
+            password: writer.password || "defaultPassword123",
+            isActive: true,
+            isVerified: false,
+          });
+          await user.save();
+        }
+
+        newEqub.members.push({
+          userId: user._id,
+          name: writer.fullName,
+          participationType: "full",
+          formNumber: writer.formNumber || 1,
+          role: "writer",
+          joinedDate: new Date(),
+          isActive: true,
+        });
+      }
+    }
+
+    // Save the Equb
+    await newEqub.save();
+
+    // Create notification for creator
+    await Notification.create({
+      notificationId: Notification.generateNotificationId(),
+      userId: creatorId,
+      type: "equb",
+      title: "Ekub Created Successfully",
+      message: `Your Ekub "${name}" has been created and is now pending member recruitment.`,
+      actionUrl: `/equb/${newEqub._id}`,
+      isRead: false,
+    });
+
+    // Create notifications for invited members
+    const allInvitedMembers = [
+      ...(collectorsInfo || []).map((c) => c.phoneNumber),
+      ...(judgesInfo || []).map((j) => j.phoneNumber),
+      ...(writersInfo || []).map((w) => w.phoneNumber),
+    ];
+
+    for (const phoneNumber of allInvitedMembers) {
+      const user = await User.findOne({ phoneNumber });
+      if (user) {
+        await Notification.create({
+          notificationId: Notification.generateNotificationId(),
+          userId: user._id,
+          type: "equb",
+          title: "Ekub Invitation",
+          message: `You have been invited to join "${name}" as a special member.`,
+          actionUrl: `/equb/${newEqub._id}`,
+          isRead: false,
+        });
+      }
+    }
+
+    res.status(201).json({
+      status: "success",
+      message: "Ekub created successfully",
+      data: {
+        equbId: newEqub._id,
+        equbIdCode: newEqub.equbId,
+        name: newEqub.name,
+        startDate: newEqub.startDate,
+        maxMembers: newEqub.maxMembers,
+        saving: newEqub.saving,
+        roundDuration: newEqub.roundDuration,
+        level: newEqub.level,
+        bankAccountDetail: newEqub.bankAccountDetail,
+        createdAt: newEqub.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error("Create Equb error:", error);
+    res.status(500).json({
+      status: "error",
+      error: {
+        code: "equb-creation/failed",
+        message: "Failed to create Ekub",
+      },
+    });
+  }
+};
+
+// Get Ekub creation details
+const getEqubCreationDetails = async (req, res) => {
+  try {
+    const { equbId } = req.params;
+    const userId = req.user._id;
+
+    // Validate equb ID format (E + 9 alphanumeric chars)
+    if (!/^E[A-Z0-9]{9}$/.test(equbId)) {
+      return res.status(400).json({
+        status: "error",
+        error: {
+          code: "equb-creation/invalid-id",
+          message: "Invalid Equb ID format. Expected format: E + 9 alphanumeric characters",
+        },
+      });
+    }
+
+    const equb = await Equb.findOne({ equbId })
+      .populate("members.userId", "fullName phoneNumber profilePicture")
+      .populate("createdBy", "fullName phoneNumber profilePicture");
+
+    if (!equb) {
+      return res.status(404).json({
+        status: "error",
+        error: {
+          code: "equb-creation/not-found",
+          message: "Ekub not found",
+        },
+      });
+    }
+
+    // Check if user is creator or member
+    const isCreator = equb.createdBy._id.toString() === userId.toString();
+    const isMember = equb.members.some(
+      (m) => m.userId._id.toString() === userId.toString()
+    );
+
+    if (!isCreator && !isMember) {
+      return res.status(403).json({
+        status: "error",
+        error: {
+          code: "equb-creation/access-denied",
+          message: "You don't have access to this Ekub",
+        },
+      });
+    }
+
+    res.status(200).json({
+      status: "success",
+      message: "Ekub details retrieved successfully",
+      data: {
+        equb: {
+          _id: equb._id,
+          equbId: equb.equbId,
+          name: equb.name,
+          status: equb.isActive ? 'active' : 'inactive',
+          currentMembers: equb.members.length,
+          maxMembers: equb.maxMembers,
+          perMemberAmount: equb.saving,
+          totalAmount: equb.saving * equb.maxMembers,
+          roundDuration: equb.roundDuration,
+          level: equb.level,
+          startDate: equb.startDate,
+          bankAccountDetail: equb.bankAccountDetail || [],
+          privacyPolicy: equb.privacyPolicy,
+          creator: {
+            _id: equb.createdBy._id,
+            fullName: equb.createdBy.fullName,
+            phoneNumber: equb.createdBy.phoneNumber,
+            profilePicture: equb.createdBy.profilePicture,
+          },
+          members: equb.members.map((member) => ({
+            _id: member.userId._id,
+            fullName: member.userId.fullName,
+            phoneNumber: member.userId.phoneNumber,
+            profilePicture: member.userId.profilePicture,
+            role: member.role,
+            joinedAt: member.joinedDate,
+            isActive: member.isActive,
+          })),
+          createdAt: equb.createdAt,
+          updatedAt: equb.updatedAt,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Get Equb details error:", error);
+    res.status(500).json({
+      status: "error",
+      error: {
+        code: "equb-creation/details-failed",
+        message: "Failed to retrieve Ekub details",
+      },
+    });
+  }
+};
+
 module.exports = {
   discoverEqubs,
   joinEqub,
@@ -670,4 +1451,12 @@ module.exports = {
   addMember,
   removeMember,
   updateMemberRole,
+  getEqubMembers,
+  getMemberPaymentHistory,
+  getUnpaidMembers,
+  getRoundWinners,
+  updateEqub,
+  postRoundWinner,
+  createEqub,
+  getEqubCreationDetails,
 };

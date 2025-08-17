@@ -136,7 +136,7 @@ The application uses the `config` package for configuration management. Configur
   },
   "jwt": {
     "secret": "your-jwt-secret",
-    "accessExpiry": "15m",
+    "accessExpiry": "10m",
     "refreshExpiry": "30d"
   },
   "cors": {

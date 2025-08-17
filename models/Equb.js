@@ -154,7 +154,7 @@ const equbSchema = new mongoose.Schema({
     },
     participationType: {
       type: String,
-      enum: ['full', 'half'],
+      enum: ['full', 'half', 'quarter'],
       required: true
     },
     formNumber: {
@@ -203,6 +203,25 @@ const equbSchema = new mongoose.Schema({
         trim: true
       }
     }]
+  }],
+  roundWinners: [{
+    roundNumber: {
+      type: Number,
+      required: true
+    },
+    winnerFormNumbers: [{
+      type: Number,
+      required: true
+    }],
+    participationType: {
+      type: String,
+      enum: ['full', 'half', 'quarter'],
+      required: true
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
   }]
 }, {
   timestamps: true,
@@ -222,7 +241,6 @@ equbSchema.virtual('nextPaymentDate').get(function() {
 });
 
 // Indexes
-equbSchema.index({ equbId: 1 });
 equbSchema.index({ type: 1 });
 equbSchema.index({ roundDuration: 1 });
 equbSchema.index({ isActive: 1 });

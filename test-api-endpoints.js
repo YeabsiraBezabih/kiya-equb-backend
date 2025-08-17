@@ -32,28 +32,28 @@ async function testEndpoints() {
     // Test 3: Check equb creation endpoint
     console.log('\n3. Testing equb creation endpoint...');
     try {
-      const equbResponse = await axios.get(`${BASE_URL}/api/mobile/equb-creation/my-created`);
-      console.log('❌ Equb creation endpoint should require authentication');
+      const equbResponse = await axios.get(`${BASE_URL}/api/mobile/equbs/my-equbs`);
+      console.log('❌ Equb endpoint should require authentication');
     } catch (error) {
       if (error.response?.status === 401) {
-        console.log('✅ Equb creation endpoint properly protected (401 Unauthorized)');
+        console.log('✅ Equb endpoint properly protected (401 Unauthorized)');
       } else {
-        console.log('❌ Equb creation endpoint error:', error.response?.status, error.response?.data);
+        console.log('❌ Equb endpoint error:', error.response?.status, error.response?.data);
       }
     }
 
-    // Test 4: Check if equb creation route exists
-    console.log('\n4. Testing equb creation route existence...');
+    // Test 4: Check if equb route exists
+    console.log('\n4. Testing equb route existence...');
     try {
-      const routeResponse = await axios.get(`${BASE_URL}/api/mobile/equb-creation`);
-      console.log('✅ Equb creation route exists');
+      const routeResponse = await axios.get(`${BASE_URL}/api/mobile/equbs`);
+      console.log('✅ Equb route exists');
     } catch (error) {
       if (error.response?.status === 401) {
-        console.log('✅ Equb creation route exists (401 Unauthorized expected)');
+        console.log('✅ Equb route exists (401 Unauthorized expected)');
       } else if (error.response?.status === 404) {
-        console.log('❌ Equb creation route not found (404)');
+        console.log('❌ Equb route not found (404)');
       } else {
-        console.log('⚠️  Equb creation route response:', error.response?.status, error.response?.data);
+        console.log('⚠️  Equb route response:', error.response?.status, error.response?.data);
       }
     }
 

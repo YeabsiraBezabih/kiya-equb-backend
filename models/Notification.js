@@ -104,7 +104,6 @@ notificationSchema.virtual('status').get(function() {
 });
 
 // Indexes
-notificationSchema.index({ notificationId: 1 });
 notificationSchema.index({ userId: 1 });
 notificationSchema.index({ type: 1 });
 notificationSchema.index({ isRead: 1 });

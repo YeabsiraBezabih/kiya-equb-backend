@@ -26,8 +26,7 @@ try {
   const notificationRoutes = require('./routes/notification.route.js');
   console.log('✅ Notification routes loaded');
   
-  const equbCreationRoutes = require('./routes/equb-creation.route.js');
-  console.log('✅ Equb creation routes loaded');
+
   
   const userRoutes = require('./routes/user.route.js');
   console.log('✅ User routes loaded');
@@ -56,8 +55,7 @@ try {
   app.use('/api/mobile/notifications', notificationRoutes);
   console.log('✅ Notification routes registered');
   
-  app.use('/api/mobile/equb-creation', equbCreationRoutes);
-  console.log('✅ Equb creation routes registered');
+
   
   app.use('/api/mobile/users', userRoutes);
   console.log('✅ User routes registered');

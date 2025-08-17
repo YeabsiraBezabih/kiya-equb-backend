@@ -107,7 +107,7 @@ const equbSchemas = {
   
   joinEqub: Joi.object({
     equbId: commonSchemas.equbId.required(),
-    participationType: Joi.string().valid('full', 'half').required(),
+    participationType: Joi.string().valid('full', 'half', 'quarter').required(),
     formNumber: Joi.number().integer().min(1).required(),
     secretNumber: Joi.string().length(6).optional()
   }),
@@ -124,7 +124,7 @@ const equbSchemas = {
       .message('Full name must contain only letters and spaces')
       .required(),
     formNumber: Joi.number().integer().min(1).required(),
-    participationType: Joi.string().valid('full', 'half').required(),
+    participationType: Joi.string().valid('full', 'half', 'quarter').required(),
     secretNumber: Joi.string().length(6).optional(),
     phone: commonSchemas.phoneNumber.required(),
     paidRounds: Joi.number().integer().min(0).default(0)
@@ -132,6 +132,35 @@ const equbSchemas = {
   
   updateMemberRole: Joi.object({
     role: Joi.string().valid('member', 'collector', 'judge', 'writer', 'admin').required()
+  }),
+
+  postRoundWinner: Joi.object({
+    formNumbers: Joi.array().items(Joi.number().integer().min(1)).required(),
+    participationType: Joi.string().valid('full', 'half', 'quarter').required()
+  }),
+
+  updateEqub: Joi.object({
+    collectorsInfo: Joi.array().items(
+      Joi.object({
+        userId: Joi.string().pattern(/^[0-9a-fA-F]{24}$/).optional(),
+        name: Joi.string().min(2).max(100).required(),
+        phone: Joi.string().pattern(/^\+?[1-9]\d{1,14}$/).required()
+      })
+    ).optional(),
+    judgInfo: Joi.array().items(
+      Joi.object({
+        userId: Joi.string().pattern(/^[0-9a-fA-F]{24}$/).optional(),
+        name: Joi.string().min(2).max(100).required(),
+        phone: Joi.string().pattern(/^\+?[1-9]\d{1,14}$/).required()
+      })
+    ).optional(),
+    writersInfo: Joi.array().items(
+      Joi.object({
+        userId: Joi.string().pattern(/^[0-9a-fA-F]{24}$/).optional(),
+        name: Joi.string().min(2).max(100).required(),
+        phone: Joi.string().pattern(/^\+?[1-9]\d{1,14}$/).required()
+      })
+    ).optional()
   }),
 
   createEqub: Joi.object({
@@ -298,6 +327,8 @@ module.exports = {
   validateGetMyEqubs: validate(equbSchemas.getMyEqubs),
   validateAddMember: validate(equbSchemas.addMember),
   validateUpdateMemberRole: validate(equbSchemas.updateMemberRole),
+  validatePostRoundWinner: validate(equbSchemas.postRoundWinner),
+  validateUpdateEqub: validate(equbSchemas.updateEqub),
   validateEqubCreation: validate(equbSchemas.createEqub),
   
   validatePaymentHistory: validate(paymentSchemas.paymentHistory, 'query'),

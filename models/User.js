@@ -128,9 +128,7 @@ userSchema.virtual('activeEqubs').get(function() {
 });
 
 // Indexes
-userSchema.index({ phoneNumber: 1 });
 userSchema.index({ email: 1 }, { sparse: true }); // Allow multiple null values
-userSchema.index({ userId: 1 });
 userSchema.index({ referralId: 1 });
 
 // Pre-save middleware to hash password
@@ -172,6 +170,11 @@ userSchema.methods.removeRefreshToken = function(token) {
 userSchema.methods.cleanExpiredTokens = function() {
   this.refreshTokens = this.refreshTokens.filter(rt => rt.expiresAt > new Date());
   return this.save();
+};
+
+// Static method to find user by custom userId
+userSchema.statics.findByUserId = function(userId) {
+  return this.findOne({ userId });
 };
 
 module.exports = mongoose.model('User', userSchema); 

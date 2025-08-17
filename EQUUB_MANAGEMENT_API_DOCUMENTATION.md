@@ -703,7 +703,7 @@ Authorization: Bearer <access_token>
 ```
 
 ### Token Expiration
-- **Access Token**: 15 minutes
+- **Access Token**: 10 minutes
 - **Refresh Token**: 7 days
 
 ---

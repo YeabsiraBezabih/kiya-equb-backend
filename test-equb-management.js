@@ -146,7 +146,7 @@ const createTestEqub = async () => {
   try {
     console.log('🔧 Creating test equb for management tests...');
     
-    const response = await axios.post(`${BASE_URL}/api/mobile/equb-creation/create`, testEqubData.valid, {
+    const response = await axios.post(`${BASE_URL}/api/mobile/equbs/create`, testEqubData.valid, {
       headers: {
         'Authorization': `Bearer ${creatorToken}`,
         'Content-Type': 'application/json'
@@ -582,7 +582,7 @@ const testRemoveMember = async () => {
       const memberToRemove = equb.members.find(m => m.role !== 'admin');
       
       if (memberToRemove) {
-        const response = await axios.delete(`${BASE_URL}${API_BASE}/${createdEqubIdForManagement}/members/${memberToRemove.userId}`, {
+        const response = await axios.delete(`${BASE_URL}${API_BASE}/${createdEqubIdForManagement}/members/${memberToRemove.customUserId}`, {
           headers: {
             'Authorization': `Bearer ${creatorToken}`
           }
@@ -608,7 +608,7 @@ const testRemoveMember = async () => {
   console.log('============================================================');
   
   try {
-    const fakeUserId = '507f1f77bcf86cd799439011';
+    const fakeUserId = 'UFAKE12345';
     const response = await axios.delete(`${BASE_URL}${API_BASE}/${createdEqubIdForManagement}/members/${fakeUserId}`);
     logTest('Unauthenticated Remove Member Prevention', 'FAILED', 'Should have been blocked');
   } catch (error) {
@@ -651,7 +651,7 @@ const testUpdateMemberRole = async () => {
           role: 'collector'
         };
 
-        const response = await axios.put(`${BASE_URL}${API_BASE}/${createdEqubIdForManagement}/members/${memberToUpdate.userId}/role`, roleData, {
+        const response = await axios.put(`${BASE_URL}${API_BASE}/${createdEqubIdForManagement}/members/${memberToUpdate.customUserId}/role`, roleData, {
           headers: {
             'Authorization': `Bearer ${creatorToken}`
           }
