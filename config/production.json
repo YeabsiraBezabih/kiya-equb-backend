@@ -10,9 +10,6 @@
       "maxPoolSize": 20,
       "serverSelectionTimeoutMS": 10000,
       "socketTimeoutMS": 60000,
-      "bufferMaxEntries": 0,
-      "ssl": true,
-      "sslValidate": true,
       "retryWrites": true,
       "w": "majority"
     }
