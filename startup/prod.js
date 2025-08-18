@@ -25,22 +25,19 @@ module.exports = function (app) {
     })
   );
 
-  // CORS configuration
-  const corsOrigins = config.get("cors.origins");
-  const allowedOrigins = Array.isArray(corsOrigins)
-    ? corsOrigins
-    : corsOrigins
-    ? corsOrigins.split(",").map((origin) => origin.trim())
-    : ["http://localhost:3000", "http://localhost:3001"];
-
+  // CORS configuration - allow all origins (while supporting credentials)
+  // Note: Using a function here allows reflecting any Origin instead of '*',
+  // which is required when credentials are enabled.
   app.use(
     cors({
-      origin: allowedOrigins,
+      origin: (origin, callback) => callback(null, true),
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
     })
   );
+  // Enable preflight across-the-board
+  app.options("*", cors());
 
   // Compression middleware
   app.use(compression());
