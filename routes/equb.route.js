@@ -117,9 +117,9 @@ router.use(authenticateToken);
  *                       description: Phone number in international format
  *                       example: "+251911234567"
  *                       pattern: "^\\+?[1-9]\\d{1,14}$"
- *                     formNumber:
+ *                     slotNumber:
  *                       type: string
- *                       description: Form number for the collector (optional)
+ *                       description: Slot number for the collector (optional)
  *                       example: "2"
  *                     password:
  *                       type: string
@@ -145,9 +145,9 @@ router.use(authenticateToken);
  *                       description: Phone number in international format
  *                       example: "+251922345678"
  *                     pattern: "^\\+?[1-9]\\d{1,14}$"
- *                     formNumber:
+ *                     slotNumber:
  *                       type: string
- *                       description: Form number for the judge (optional)
+ *                       description: Slot number for the judge (optional)
  *                       example: "3"
  *                     password:
  *                       type: string
@@ -173,9 +173,9 @@ router.use(authenticateToken);
  *                       description: Phone number in international format
  *                       example: "+251933456789"
  *                     pattern: "^\\+?[1-9]\\d{1,14}$"
- *                     formNumber:
+ *                     slotNumber:
  *                       type: string
- *                       description: Form number for the writer (optional)
+ *                       description: Slot number for the writer (optional)
  *                       example: "4"
  *                     password:
  *                       type: string
@@ -466,7 +466,7 @@ router.get('/discover-equbs', validateDiscoverEqubs, equbController.discoverEqub
  *             required:
  *               - equbId
  *               - participationType
- *               - formNumber
+ *               - slotNumber
  *             properties:
  *               equbId:
  *                 type: string
@@ -478,10 +478,10 @@ router.get('/discover-equbs', validateDiscoverEqubs, equbController.discoverEqub
  *                 enum: [full, half]
  *                 description: Type of participation
  *                 example: "full"
- *               formNumber:
+ *               slotNumber:
  *                 type: integer
  *                 minimum: 1
- *                 description: Form number for the member
+ *                 description: Slot number for the member
  *                 example: 1
  *               secretNumber:
  *                 type: string
@@ -515,12 +515,12 @@ router.get('/discover-equbs', validateDiscoverEqubs, equbController.discoverEqub
  *                       enum: [full, half]
  *                       description: User's participation type
  *                       example: "full"
- *                     formNumber:
+ *                     slotNumber:
  *                       type: integer
- *                       description: User's form number
+ *                       description: User's slot number
  *                       example: 1
  *       400:
- *         description: Validation error, equb is full, form number taken, or secret number required/invalid
+ *         description: Validation error, equb is full, slot number taken, or secret number required/invalid
  *         content:
  *           application/json:
  *             schema:
@@ -585,9 +585,9 @@ router.post('/join-equb', validateJoinEqub, equbController.joinEqub);
  *                         enum: [full, half]
  *                         description: User's participation type
  *                         example: "full"
- *                       formNumber:
+ *                       slotNumber:
  *                         type: integer
- *                         description: User's form number
+ *                         description: User's slot number
  *                         example: 1
  *                       role:
  *                         type: string
@@ -804,9 +804,9 @@ router.get('/my-equbs', equbController.getMyEqubs);
  *                             type: string
  *                             enum: [full, half]
  *                             description: Member's participation type
- *                           formNumber:
+ *                           slotNumber:
  *                             type: integer
- *                             description: Member's form number
+ *                             description: Member's slot number
  *                           role:
  *                             type: string
  *                             enum: [member, collector, judge, writer, admin]
@@ -891,7 +891,7 @@ router.get('/:equbId', equbController.getEqubDetails);
  *             type: object
  *             required:
  *               - fullName
- *               - formNumber
+ *               - slotNumber
  *               - participationType
  *               - phone
  *             properties:
@@ -902,10 +902,10 @@ router.get('/:equbId', equbController.getEqubDetails);
  *                 minLength: 2
  *                 maxLength: 100
  *                 pattern: "^[a-zA-Z\\s]+$"
- *               formNumber:
+ *               slotNumber:
  *                 type: integer
  *                 minimum: 1
- *                 description: Form number for the member
+ *                 description: Slot number for the member
  *                 example: 5
  *               participationType:
  *                 type: string
@@ -955,7 +955,7 @@ router.get('/:equbId', equbController.getEqubDetails);
  *                       description: MongoDB ObjectId of the new member
  *                       example: "507f1f77bcf86cd799439011"
  *       400:
- *         description: Validation error, equb is full, form number taken, or phone already a member
+ *         description: Validation error, equb is full, slot number taken, or phone already a member
  *         content:
  *           application/json:
  *             schema:
@@ -1040,79 +1040,7 @@ router.post('/:equbId/add-members', isEqubAdmin, validateAddMember, equbControll
  *             schema:
  *               $ref: '#/components/schemas/Error'
  *       403:
- *         description: Forbidden - User is not an admin of this equb
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       404:
- *         description: Equb, user, or member not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-
-/**
- * @swagger
- * /api/mobile/equbs/{equbId}/members/{userId}:
- *   delete:
- *     summary: Remove member from equb
- *     tags: [Equbs]
- *     description: Remove a member from the equb (requires admin role only)
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: equbId
- *         required: true
- *         schema:
- *           type: string
- *           pattern: "^E[A-Z0-9]{9}$"
- *         description: ID of the equb - E followed by 9 alphanumeric characters
- *         example: "EABC123DEF"
- *       - in: path
- *         name: userId
- *         required: true
- *         schema:
- *           type: string
- *           pattern: "^U[A-Z0-9]{9}$"
- *         description: ID of the user - U followed by 9 alphanumeric characters
- *         example: "UABC123DEF"
- *     responses:
- *       200:
- *         description: Member removed successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: "success"
- *                 message:
- *                   type: string
- *                   example: "Member removed successfully"
- *       400:
- *         description: Cannot remove admin member
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       401:
- *         description: Unauthorized - Invalid or missing token
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       403:
- *         description: Forbidden - User is not an admin of this equb
+ *         description: Forbidden - User is not an admin role
  *         content:
  *           application/json:
  *             schema:
@@ -1336,9 +1264,9 @@ router.put('/:equbId/members/:userId/role', isEqubAdmin, validateUpdateMemberRol
  *                         type: string
  *                         enum: [full, half, quarter]
  *                         description: Member's participation type
- *                       formNumber:
+ *                       slotNumber:
  *                         type: integer
- *                         description: Member's form number
+ *                         description: Member's slot number
  *                       role:
  *                         type: string
  *                         enum: [member, collector, judge, writer, admin]
@@ -1375,185 +1303,6 @@ router.put('/:equbId/members/:userId/role', isEqubAdmin, validateUpdateMemberRol
  *               $ref: '#/components/schemas/Error'
  */
 router.get('/:equbId/get-members', isEqubMember, equbController.getEqubMembers);
-
-/**
- * @swagger
- * /api/mobile/equbs/{equbId}/{memberId}:
- *   get:
- *     summary: Get member payment history
- *     tags: [Equbs]
- *     description: Get payment history for a specific member in the equb (requires membership)
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: equbId
- *         required: true
- *         schema:
- *           type: string
- *           pattern: "^E[A-Z0-9]{9}$"
- *         description: ID of the equb - E followed by 9 alphanumeric characters
- *         example: "EABC123DEF"
- *       - in: path
- *         name: memberId
- *         required: true
- *         schema:
- *           type: string
- *           pattern: "^[0-9a-fA-F]{24}$"
- *         description: MongoDB ObjectId of the member
- *         example: "507f1f77bcf86cd799439011"
- *     responses:
- *       200:
- *         description: Member payment history retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: "success"
- *                 data:
- *                   type: object
- *                   properties:
- *                     member:
- *                       type: object
- *                       properties:
- *                         userId:
- *                           type: string
- *                           description: Member's MongoDB ObjectId
- *                         name:
- *                           type: string
- *                           description: Member's full name
- *                         participationType:
- *                           type: string
- *                           enum: [full, half, quarter]
- *                           description: Member's participation type
- *                         formNumber:
- *                           type: integer
- *                           description: Member's form number
- *                         role:
- *                           type: string
- *                           enum: [member, collector, judge, writer, admin]
- *                           description: Member's role
- *                     paymentHistory:
- *                       type: array
- *                       description: Member's payment history
- *                       items:
- *                         type: object
- *                         properties:
- *                           roundNumber:
- *                             type: integer
- *                             description: Round number
- *                           date:
- *                             type: string
- *                             format: date-time
- *                             description: Payment date
- *                           status:
- *                             type: string
- *                             enum: [paid, unpaid, pending, cancelled]
- *                             description: Payment status
- *                           amountPaid:
- *                             type: number
- *                             description: Amount paid
- *                           paymentMethod:
- *                             type: string
- *                             enum: [cash, bank, mobile_money]
- *                             description: Payment method
- *                           notes:
- *                             type: string
- *                             description: Payment notes
- *       401:
- *         description: Unauthorized - Invalid or missing token
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       403:
- *         description: Forbidden - User is not a member of this equb
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       404:
- *         description: Equb or member not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-router.get('/:equbId/:memberId', isEqubMember, equbController.getMemberPaymentHistory);
-
-/**
- * @swagger
- * /api/mobile/equbs/unpaid-members:
- *   get:
- *     summary: Get unpaid members across all equbs
- *     tags: [Equbs]
- *     description: Get a list of unpaid members across all equbs the user is a member of
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Unpaid members retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: "success"
- *                 data:
- *                   type: array
- *                   description: Array of unpaid members
- *                   items:
- *                     type: object
- *                     properties:
- *                       userId:
- *                         type: string
- *                         description: Member's MongoDB ObjectId
- *                       name:
- *                         type: string
- *                         description: Member's full name
- *                       unpaidRounds:
- *                         type: integer
- *                         description: Number of unpaid rounds
- *                       formNumber:
- *                         type: integer
- *                         description: Member's form number
- *                       phone:
- *                         type: string
- *                         description: Member's phone number
- *                       paidRounds:
- *                         type: integer
- *                         description: Number of paid rounds
- *                       equbId:
- *                         type: string
- *                         description: Equb ID code
- *                       equbName:
- *                         type: string
- *                         description: Equb name
- *       401:
- *         description: Unauthorized - Invalid or missing token
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-router.get('/unpaid-members', authenticateToken, equbController.getUnpaidMembers);
 
 /**
  * @swagger
@@ -1605,9 +1354,9 @@ router.get('/unpaid-members', authenticateToken, equbController.getUnpaidMembers
  *                                 phone:
  *                                   type: string
  *                                   description: Winner's phone number
- *                                 formNumber:
+ *                                 slotNumber:
  *                                   type: integer
- *                                   description: Winner's form number
+ *                                   description: Winner's slot number
  *                                 unpaidRounds:
  *                                   type: integer
  *                                   description: Number of unpaid rounds
@@ -1647,77 +1396,16 @@ router.get('/:equbId/get-winners', isEqubMember, equbController.getRoundWinners)
 
 /**
  * @swagger
- * /api/mobile/equbs/update/{equbId}:
- *   put:
- *     summary: Update equb information
+ * /api/mobile/equbs/unpaid-members:
+ *   get:
+ *     summary: Get unpaid members across all equbs
  *     tags: [Equbs]
- *     description: Update equb information including collectors, judges, and writers (requires admin role)
+ *     description: Get a list of unpaid members across all equbs the user is a member of
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: equbId
- *         required: true
- *         schema:
- *           type: string
- *           pattern: "^E[A-Z0-9]{9}$"
- *         description: ID of the equb - E followed by 9 alphanumeric characters
- *         example: "EABC123DEF"
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               collectorsInfo:
- *                 type: array
- *                 description: Updated collectors information
- *                 items:
- *                   type: object
- *                   properties:
- *                     userId:
- *                       type: string
- *                       description: Collector's MongoDB ObjectId
- *                     name:
- *                       type: string
- *                       description: Collector's full name
- *                     phone:
- *                       type: string
- *                       description: Collector's phone number
- *               judgInfo:
- *                 type: array
- *                 description: Updated judges information
- *                 items:
- *                   type: object
- *                   properties:
- *                     userId:
- *                       type: string
- *                       description: Judge's MongoDB ObjectId
- *                     name:
- *                       type: string
- *                       description: Judge's full name
- *                     phone:
- *                       type: string
- *                       description: Judge's phone number
- *               writersInfo:
- *                 type: array
- *                 description: Updated writers information
- *                 items:
- *                   type: object
- *                   properties:
- *                     userId:
- *                       type: string
- *                       description: Writer's MongoDB ObjectId
- *                     name:
- *                       type: string
- *                       description: Writer's full name
- *                     phone:
- *                       type: string
- *                       description: Writer's phone number
  *     responses:
  *       200:
- *         description: Equb updated successfully
+ *         description: Unpaid members retrieved successfully
  *         content:
  *           application/json:
  *             schema:
@@ -1726,44 +1414,38 @@ router.get('/:equbId/get-winners', isEqubMember, equbController.getRoundWinners)
  *                 status:
  *                   type: string
  *                   example: "success"
- *                 message:
- *                   type: string
- *                   example: "Equb updated successfully"
  *                 data:
- *                   type: object
- *                   properties:
- *                     equbId:
- *                       type: string
- *                       description: Equb ID code
- *                     collectorsInfo:
- *                       type: array
- *                       description: Updated collectors information
- *                     judgInfo:
- *                       type: array
- *                       description: Updated judges information
- *                     writersInfo:
- *                       type: array
- *                       description: Updated writers information
- *       400:
- *         description: Validation error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
+ *                   type: array
+ *                   description: Array of unpaid members
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       userId:
+ *                         type: string
+ *                         description: Member's MongoDB ObjectId
+ *                       name:
+ *                         type: string
+ *                         description: Member's full name
+ *                       unpaidRounds:
+ *                         type: integer
+ *                         description: Number of unpaid rounds
+ *                       slotNumber:
+ *                         type: integer
+ *                         description: Member's slot number
+ *                       phone:
+ *                         type: string
+ *                         description: Member's phone number
+ *                       paidRounds:
+ *                         type: integer
+ *                         description: Number of paid rounds
+ *                       equbId:
+ *                         type: string
+ *                         description: Equb ID code
+ *                       equbName:
+ *                         type: string
+ *                         description: Equb name
  *       401:
  *         description: Unauthorized - Invalid or missing token
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       403:
- *         description: Forbidden - User is not an admin of this equb
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       404:
- *         description: Equb not found
  *         content:
  *           application/json:
  *             schema:
@@ -1775,113 +1457,7 @@ router.get('/:equbId/get-winners', isEqubMember, equbController.getRoundWinners)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/update/:equbId', isEqubAdmin, validateUpdateEqub, equbController.updateEqub);
-
-/**
- * @swagger
- * /api/mobile/equbs/{equbId}/post-round-winner:
- *   post:
- *     summary: Post round winner
- *     tags: [Equbs]
- *     description: Post round winner for a specific equb (requires admin role)
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: equbId
- *         required: true
- *         schema:
- *           type: string
- *           pattern: "^E[A-Z0-9]{9}$"
- *         description: ID of the equb - E followed by 9 alphanumeric characters
- *         example: "EABC123DEF"
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - formNumbers
- *               - participationType
- *             properties:
- *               formNumbers:
- *                 type: array
- *                 description: Array of form numbers for winners
- *                 items:
- *                   type: integer
- *                   minimum: 1
- *                 example: [5, 12]
- *               participationType:
- *                 type: string
- *                 enum: [full, half, quarter]
- *                 description: Type of participation for this round
- *                 example: "half"
- *     responses:
- *       200:
- *         description: Round winner posted successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: "success"
- *                 message:
- *                   type: string
- *                   example: "Round winner posted successfully"
- *                 data:
- *                   type: object
- *                   properties:
- *                     roundNumber:
- *                       type: integer
- *                       description: Round number
- *                     winners:
- *                       type: array
- *                       description: Array of winners
- *                       items:
- *                         type: object
- *                         properties:
- *                           formNumber:
- *                             type: integer
- *                             description: Winner's form number
- *                           participationType:
- *                             type: string
- *                             enum: [full, half, quarter]
- *                             description: Participation type
- *       400:
- *         description: Validation error or invalid form numbers
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       401:
- *         description: Unauthorized - Invalid or missing token
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       403:
- *         description: Forbidden - User is not an admin of this equb
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       404:
- *         description: Equb not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-router.post('/:equbId/post-round-winner', isEqubAdmin, validatePostRoundWinner, equbController.postRoundWinner);
+router.get('/unpaid-members', authenticateToken, equbController.getUnpaidMembers);
 
 /**
  * @swagger
@@ -2066,5 +1642,406 @@ router.post('/:equbId/post-round-winner', isEqubAdmin, validatePostRoundWinner, 
  *               $ref: '#/components/schemas/Error'
  */
 router.get('/:equbId/creation-details', equbController.getEqubCreationDetails);
+
+/**
+ * @swagger
+ * /api/mobile/equbs/{equbId}/post-round-winner:
+ *   post:
+ *     summary: Post round winner
+ *     tags: [Equbs]
+ *     description: Post round winner for a specific equb (requires admin role)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: equbId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           pattern: "^E[A-Z0-9]{9}$"
+ *         description: ID of the equb - E followed by 9 alphanumeric characters
+ *         example: "EABC123DEF"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - slotNumbers
+ *               - participationType
+ *             properties:
+ *               slotNumbers:
+ *                 type: array
+ *                 description: Array of slot numbers for winners
+ *                 items:
+ *                   type: integer
+ *                   minimum: 1
+ *                 example: [5, 12]
+ *               participationType:
+ *                 type: string
+ *                 enum: [full, half, quarter]
+ *                 description: Type of participation for this round
+ *                 example: "half"
+ *     responses:
+ *       200:
+ *         description: Round winner posted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "success"
+ *                 message:
+ *                   type: string
+ *                   example: "Round winner posted successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     roundNumber:
+ *                       type: integer
+ *                       description: Round number
+ *                     winners:
+ *                       type: array
+ *                       description: Array of winners
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           slotNumber:
+ *                             type: integer
+ *                             description: Winner's slot number
+ *                           participationType:
+ *                             type: string
+ *                             enum: [full, half, quarter]
+ *                             description: Participation type
+ *       400:
+ *         description: Validation error or invalid slot numbers
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden - User is not an admin of this equb
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Equb not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post('/:equbId/post-round-winner', isEqubAdmin, validatePostRoundWinner, equbController.postRoundWinner);
+
+/**
+ * @swagger
+ * /api/mobile/equbs/update/{equbId}:
+ *   put:
+ *     summary: Update equb information
+ *     tags: [Equbs]
+ *     description: Update equb information including collectors, judges, and writers (requires admin role)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: equbId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           pattern: "^E[A-Z0-9]{9}$"
+ *         description: ID of the equb - E followed by 9 alphanumeric characters
+ *         example: "EABC123DEF"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               collectorsInfo:
+ *                 type: array
+ *                 description: Updated collectors information
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     userId:
+ *                       type: string
+ *                       description: Collector's MongoDB ObjectId
+ *                     name:
+ *                       type: string
+ *                       description: Collector's full name
+ *                     phone:
+ *                       type: string
+ *                       description: Collector's phone number
+ *               judgInfo:
+ *                 type: array
+ *                 description: Updated judges information
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     userId:
+ *                       type: string
+ *                       description: Judge's MongoDB ObjectId
+ *                     name:
+ *                       type: string
+ *                       description: Judge's full name
+ *                     phone:
+ *                       type: string
+ *                       description: Judge's phone number
+ *               writersInfo:
+ *                 type: array
+ *                 description: Updated writers information
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     userId:
+ *                       type: string
+ *                       description: Writer's MongoDB ObjectId
+ *                     name:
+ *                       type: string
+ *                       description: Writer's full name
+ *                     phone:
+ *                       type: string
+ *                       description: Writer's phone number
+ *     responses:
+ *       200:
+ *         description: Equb updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "success"
+ *                 message:
+ *                   type: string
+ *                   example: "Equb updated successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     equbId:
+ *                       type: string
+ *                       description: Equb ID code
+ *                     collectorsInfo:
+ *                       type: array
+ *                       description: Updated collectors information
+ *                     judgInfo:
+ *                       type: array
+ *                       description: Updated judges information
+ *                     writersInfo:
+ *                       type: array
+ *                       description: Updated writers information
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden - User is not an admin of this equb
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Equb not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.put('/update/:equbId', isEqubAdmin, validateUpdateEqub, equbController.updateEqub);
+
+/**
+ * @swagger
+ * /api/mobile/equbs/{equbId}/available-form-numbers:
+ *   get:
+ *     summary: Get available form numbers for winner selection
+ *     tags: [Equbs]
+ *     description: Get available form numbers that can be selected as winners (excludes previous winners)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: equbId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           pattern: "^E[A-Z0-9]{9}$"
+ *         description: ID of the equb - E followed by 9 alphanumeric characters
+ *         example: "EABC123DEF"
+ *     responses:
+ *       200:
+ *         description: Available form numbers retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "success"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     currentRound:
+ *                       type: integer
+ *                       description: Current round number
+ *                     totalSlots:
+ *                       type: integer
+ *                       description: Total number of slots in the equb
+ *                     completedRounds:
+ *                       type: integer
+ *                       description: Number of completed rounds
+ *                     availableSlots:
+ *                       type: array
+ *                       description: Array of available slots for winner selection
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           slotNumber:
+ *                             type: integer
+ *                             description: Slot number of the slot
+ *                           slotMembers:
+ *                             type: array
+ *                             description: Members sharing this slot
+ *                           totalSlotAmount:
+ *                             type: number
+ *                             description: Total amount for this slot
+ *                           isEligible:
+ *                             type: boolean
+ *                             description: Whether all members in the slot have paid for current round
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *       403:
+ *         description: Forbidden - User is not an admin or judge of this equb
+ *       404:
+ *         description: Equb not found
+ *       500:
+ *         description: Internal server error
+ */
+router.get('/:equbId/available-slot-numbers-for-winner', 
+  authenticateToken, 
+  equbController.getAvailableSlotNumbersForWinner
+);
+
+/**
+ * @swagger
+ * /api/mobile/equbs/{equbId}/available-slot-numbers:
+ *   get:
+ *     summary: Get available slot numbers for manual assignment
+ *     tags: [Equbs]
+ *     description: Get all available slot numbers that can be manually assigned to new members
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: equbId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           pattern: "^E[A-Z0-9]{9}$"
+ *         description: ID of the equb - E followed by 9 alphanumeric characters
+ *         example: "EABC123DEF"
+ *     responses:
+ *       200:
+ *         description: Available slot numbers retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "success"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     equbId:
+ *                       type: string
+ *                       description: Equb ID
+ *                     equbName:
+ *                       type: string
+ *                       description: Equb name
+ *                     totalSlots:
+ *                       type: integer
+ *                       description: Total number of slots in the equb
+ *                     usedSlots:
+ *                       type: integer
+ *                       description: Number of slots currently in use
+ *                     availableSlots:
+ *                       type: array
+ *                       description: Array of available slot numbers
+ *                       items:
+ *                         type: integer
+ *                     currentSlotUsage:
+ *                       type: array
+ *                       description: Current usage of all slots
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           slotNumber:
+ *                             type: integer
+ *                           memberName:
+ *                             type: string
+ *                           participationType:
+ *                             type: string
+ *                           role:
+ *                             type: string
+ *                     slotCapacity:
+ *                       type: object
+ *                       description: How many people can share each slot type
+ *                       properties:
+ *                         full:
+ *                           type: integer
+ *                           description: 1 person per slot
+ *                         half:
+ *                           type: integer
+ *                           description: 2 people per slot
+ *                         quarter:
+ *                           type: integer
+ *                           description: 4 people per slot
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *       403:
+ *         description: Forbidden - User is not an admin or special member of this equb
+ *       404:
+ *         description: Equb not found
+ *       500:
+ *         description: Internal server error
+ */
+router.get('/:equbId/available-slot-numbers', 
+  authenticateToken, 
+  equbController.getAvailableSlotNumbers
+);
 
 module.exports = router; 

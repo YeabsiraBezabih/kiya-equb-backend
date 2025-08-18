@@ -4,7 +4,7 @@
     "host": "localhost"
   },
   "database": {
-    "url": "mongodb://ekub_user:ekub_password@localhost:27021/ekub-app",
+    "url": "mongodb+srv://mernapp:mernapp@cluster0.fezq01p.mongodb.net/",
     "options": {
       "maxPoolSize": 5,
       "serverSelectionTimeoutMS": 5000,
@@ -29,7 +29,13 @@
     "level": "debug",
     "filename": "logs/dev.log",
     "maxSize": "10m",
-    "maxFiles": "7d"
+    "maxFiles": "7d",
+    "mongodb": {
+      "enabled": true,
+      "db": "mongodb+srv://mernapp:mernapp@cluster0.fezq01p.mongodb.net/ekub-logs",
+      "collection": "dev-logs",
+      "level": "debug"
+    }
   },
   "email": {
     "service": "gmail",

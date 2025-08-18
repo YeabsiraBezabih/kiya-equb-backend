@@ -4,7 +4,7 @@
     "host": "0.0.0.0"
   },
   "database": {
-    "url": "mongodb://localhost:27017/ekub-app-prod",
+    "url": "mongodb+srv://mernapp:mernapp@cluster0.fezq01p.mongodb.net/",
     "options": {
       "maxPoolSize": 20,
       "serverSelectionTimeoutMS": 10000,
@@ -33,7 +33,13 @@
     "level": "warn",
     "filename": "logs/app.log",
     "maxSize": "100m",
-    "maxFiles": "30d"
+    "maxFiles": "30d",
+    "mongodb": {
+      "enabled": true,
+      "db": "mongodb+srv://mernapp:mernapp@cluster0.fezq01p.mongodb.net/ekub-logs",
+      "collection": "prod-logs",
+      "level": "warn"
+    }
   },
   "email": {
     "service": "gmail",

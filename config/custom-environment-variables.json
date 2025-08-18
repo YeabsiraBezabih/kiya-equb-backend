@@ -2,6 +2,14 @@
   "database": {
     "url": "MONGODB_URI"
   },
+  "logging": {
+    "level": "LOG_LEVEL",
+    "mongodb": {
+      "enabled": "LOG_MONGODB_ENABLED",
+      "db": "LOG_MONGODB_DB",
+      "collection": "LOG_MONGODB_COLLECTION"
+    }
+  },
   "jwt": {
     "secret": "JWT_SECRET",
     "refreshSecret": "JWT_REFRESH_SECRET"

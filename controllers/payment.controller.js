@@ -11,7 +11,8 @@ const getPaymentHistory = async (req, res) => {
     const currentUserId = req.user._id;
 
     // Check if user is a member of this equb
-    const equb = await Equb.findOne({ equbId, 'members.userId': currentUserId });
+    const equb = await Equb.findOne({ equbId, 'members.userId': currentUserId })
+      .populate('members.userId', 'userId fullName'); // Populate user data to get custom userId
     if (!equb) {
       return res.status(403).json({
         status: "error",
@@ -22,17 +23,107 @@ const getPaymentHistory = async (req, res) => {
       });
     }
 
-    // Build query
+    // First, try to get payments from the separate Payment collection
+    let payments = [];
+    let total = 0;
+    
+    // Build query for Payment collection
     const query = { equbId: equb._id };
     if (userId) query.userId = userId;
     if (status && status !== 'all') query.status = status;
 
-    // Get total count
-    const total = await Payment.countDocuments(query);
+    // Get total count from Payment collection
+    total = await Payment.countDocuments(query);
+
+    // If no payments in Payment collection, check embedded payment history
+    if (total === 0) {
+      console.log('No payments found in Payment collection, checking embedded payment history...');
+      
+      // Extract embedded payment history from equb members
+      const embeddedPayments = [];
+      
+      equb.members.forEach(member => {
+        if (member.paymentHistory && member.paymentHistory.length > 0) {
+          member.paymentHistory.forEach(payment => {
+            // Apply status filter if specified
+            if (status && status !== 'all' && payment.status !== status) {
+              return;
+            }
+            
+            // Apply userId filter if specified
+            if (userId && member.userId.toString() !== userId) {
+              return;
+            }
+            
+            // Get the custom userId from the User model
+            let customUserId = member.userId;
+            if (member.userId && typeof member.userId === 'object' && member.userId.userId) {
+              customUserId = member.userId.userId; // Use the custom userId if available
+            }
+            
+            embeddedPayments.push({
+              paymentId: `EMB_${member._id}_${payment.roundNumber}`,
+              roundNumber: payment.roundNumber,
+              date: payment.date || new Date(),
+              status: payment.status || 'paid',
+              amountPaid: payment.amount || equb.saving,
+              paymentMethod: payment.paymentMethod || 'cash',
+              userId: customUserId, // Use custom userId format
+              userName: member.name || 'Unknown',
+              slotNumber: member.slotNumber || 0,
+              participationType: member.participationType || 'full',
+              notes: payment.notes || '',
+              processedAt: payment.date || new Date()
+            });
+          });
+        }
+      });
+      
+      // Apply pagination to embedded payments
+      total = embeddedPayments.length;
+      const totalPages = Math.ceil(total / limit);
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + parseInt(limit);
+      
+      payments = embeddedPayments
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(startIndex, endIndex);
+      
+      // Calculate summary from embedded payments
+      const summary = {
+        totalPaid: embeddedPayments
+          .filter(p => p.status === 'paid')
+          .reduce((sum, p) => sum + p.amountPaid, 0),
+        totalUnpaid: embeddedPayments
+          .filter(p => p.status === 'unpaid')
+          .reduce((sum, p) => sum + p.amountPaid, 0),
+        totalMembers: equb.membersNum || equb.members.length,
+        paidMembers: embeddedPayments.filter(p => p.status === 'paid').length,
+        unpaidMembers: embeddedPayments.filter(p => p.status === 'unpaid').length
+      };
+
+      return res.status(200).json({
+        status: "success",
+        data: {
+          payments: payments,
+          summary,
+          pagination: {
+            page: parseInt(page),
+            limit: parseInt(limit),
+            total,
+            totalPages,
+            hasNext: page < totalPages,
+            hasPrev: page > 1
+          }
+        }
+      });
+    }
+
+    // If payments exist in Payment collection, use the original logic
     const totalPages = Math.ceil(total / limit);
 
     // Get payments with pagination
-    const payments = await Payment.find(query)
+    payments = await Payment.find(query)
       .populate('userId', 'fullName')
       .populate('equbId', 'name equbId')
       .sort({ createdAt: -1 })
@@ -49,7 +140,7 @@ const getPaymentHistory = async (req, res) => {
       paymentMethod: payment.paymentMethod,
       userId: payment.userId._id,
       userName: payment.userId.fullName,
-      formNumber: equb.members.find(m => m.userId.toString() === payment.userId._id.toString())?.formNumber || 0,
+      slotNumber: equb.members.find(m => m.userId.toString() === payment.userId._id.toString())?.slotNumber || 0,
       participationType: equb.members.find(m => m.userId.toString() === payment.userId._id.toString())?.participationType || 'full'
     }));
 
@@ -187,7 +278,7 @@ const getUserPaymentHistory = async (req, res) => {
     const userSummary = {
       userId: targetUser.userId || targetUser._id,
       userName: targetUser.fullName,
-      formNumber: memberInfo?.formNumber || 0,
+      slotNumber: memberInfo?.slotNumber || 0,
       participationType: memberInfo?.participationType || 'full',
       role: memberInfo?.role || 'member',
       totalPayments: total,
@@ -430,7 +521,7 @@ const getUnpaidMembers = async (req, res) => {
           userId: member.userId,
           name: member.name,
           participationType: member.participationType,
-          formNumber: member.formNumber,
+          slotNumber: member.slotNumber,
           unpaidRounds,
           totalUnpaid,
           lastPaymentDate: lastPayment ? lastPayment.date : null

@@ -117,9 +117,9 @@ router.use('/process-payment', paymentRateLimit);
  *                             type: string
  *                             description: User's full name
  *                             example: "John Doe"
- *                           formNumber:
+ *                           slotNumber:
  *                             type: integer
- *                             description: User's form number in the equb
+ *                             description: User's slot number in the equb
  *                             example: 3
  *                           participationType:
  *                             type: string
@@ -262,9 +262,9 @@ router.get('/:equbId/payment-history', isEqubMember, validatePaymentHistory, pay
  *                           type: string
  *                           description: User's full name
  *                           example: "John Doe"
- *                         formNumber:
+ *                         slotNumber:
  *                           type: integer
- *                           description: User's form number in the equb
+ *                           description: User's slot number in the equb
  *                           example: 3
  *                         participationType:
  *                           type: string
@@ -481,9 +481,9 @@ router.get('/:equbId/:userId/payment-history', isEqubMember, paymentController.g
  *                             enum: [full, half]
  *                             description: Member's participation type
  *                             example: "full"
- *                           formNumber:
+ *                           slotNumber:
  *                             type: integer
- *                             description: Member's form number
+ *                             description: Member's slot number
  *                             example: 3
  *                           unpaidRounds:
  *                             type: array

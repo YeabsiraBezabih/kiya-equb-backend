@@ -66,6 +66,10 @@ const equbSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  completedAt: {
+    type: Date,
+    default: null
+  },
   currentRound: {
     type: Number,
     default: 1
@@ -157,7 +161,7 @@ const equbSchema = new mongoose.Schema({
       enum: ['full', 'half', 'quarter'],
       required: true
     },
-    formNumber: {
+    slotNumber: {
       type: Number,
       required: true,
       min: 1
@@ -209,7 +213,7 @@ const equbSchema = new mongoose.Schema({
       type: Number,
       required: true
     },
-    winnerFormNumbers: [{
+    winnerSlotNumbers: [{
       type: Number,
       required: true
     }],
@@ -259,16 +263,63 @@ equbSchema.methods.addMember = function(userId, memberData) {
     throw new Error('User is already a member of this equb');
   }
   
+  // Fix: Automatically assign next available slot number
+  const nextSlotNumber = this.calculateNextSlotNumber(memberData.participationType);
+  
+  if (!nextSlotNumber) {
+    throw new Error('No available slots in this equb');
+  }
+  
   this.members.push({
     userId,
     name: memberData.name,
     participationType: memberData.participationType,
-    formNumber: memberData.formNumber,
+    slotNumber: nextSlotNumber,
     role: memberData.role || 'member',
     joinedDate: new Date()
   });
   
   return this.save();
+};
+
+// Fix: Add method to calculate next slot number
+equbSchema.methods.calculateNextSlotNumber = function(participationType) {
+  // Find the next available slot number within the range (1 to maxMembers)
+  const usedSlotNumbers = new Set(this.members.map(m => m.slotNumber));
+  
+  // Look for the first available slot number
+  for (let slotNumber = 1; slotNumber <= this.maxMembers; slotNumber++) {
+    if (!usedSlotNumbers.has(slotNumber)) {
+      return slotNumber;
+    }
+  }
+  
+  // If all slots are taken, return null (should not happen if maxMembers check is enforced)
+  return null;
+};
+
+// Fix: Add method to get slot multiplier based on participation type
+equbSchema.methods.getSlotMultiplier = function(participationType) {
+  switch(participationType) {
+    case 'full': return 1;    // 1 person = 1 slot
+    case 'half': return 2;    // 2 people = 1 slot
+    case 'quarter': return 4; // 4 people = 1 slot
+    default: return 1;
+  }
+};
+
+// Fix: Add method to get all available slot numbers
+equbSchema.methods.getAvailableSlotNumbers = function() {
+  const usedSlotNumbers = new Set(this.members.map(m => m.slotNumber));
+  const availableSlots = [];
+  
+  for (let slotNumber = 1; slotNumber <= this.maxMembers; slotNumber++) {
+    if (!usedSlotNumbers.has(slotNumber)) {
+      availableSlots.push(slotNumber);
+    }
+  }
+  
+  return availableSlots;
 };
 
 // Method to remove member

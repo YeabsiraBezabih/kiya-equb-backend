@@ -91,7 +91,7 @@ const discoverEqubs = async (req, res) => {
 // Join Equb
 const joinEqub = async (req, res) => {
   try {
-    const { equbId, participationType, formNumber, secretNumber } = req.body;
+    const { equbId, participationType, slotNumber, secretNumber } = req.body;
     const userId = req.user._id;
 
     // Find the equb
@@ -153,37 +153,38 @@ const joinEqub = async (req, res) => {
       });
     }
 
-    // Check if form number is available
-    const formNumberTaken = equb.members.some(
-      (m) => m.formNumber === formNumber
+    // Check if slot number is available
+    const slotNumberTaken = equb.members.some(
+      (m) => m.slotNumber === slotNumber
     );
-    if (formNumberTaken) {
+    if (slotNumberTaken) {
       return res.status(400).json({
         status: "error",
         error: {
-          code: "equb/form-number-taken",
-          message: "Form number is already taken",
+          code: "equb/slot-number-taken",
+          message: "Slot number is already taken",
         },
       });
     }
 
-    // Get user details
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({
+    // Fix: Use automatic form number assignment for slots
+    const nextSlotNumber = equb.calculateNextSlotNumber(participationType);
+    
+    if (!nextSlotNumber) {
+      return res.status(400).json({
         status: "error",
         error: {
-          code: "user/not-found",
-          message: "User not found",
+          code: "equb/no-slots-available",
+          message: "No available slots in this equb. All slots are currently occupied.",
         },
       });
     }
-
-    // Add user to equb
+    
+    // Add member to equb
     await equb.addMember(userId, {
-      name: user.fullName,
+      name: req.user.fullName,
       participationType,
-      formNumber,
+      slotNumber: nextSlotNumber, // Use calculated slot number
       role: "member",
     });
 
@@ -192,7 +193,7 @@ const joinEqub = async (req, res) => {
     if (adminMember) {
       await Notification.createEqubNotification(adminMember.userId, equb._id, {
         title: "New Member Joined",
-        message: `${user.fullName} has joined your equb ${equb.name}`,
+        message: `${req.user.fullName} has joined your equb ${equb.name}`,
         priority: "medium",
         actionUrl: `/equb/${equb.equbId}/members`,
       });
@@ -204,7 +205,7 @@ const joinEqub = async (req, res) => {
       data: {
         equbId: equb.equbId,
         participationType,
-        formNumber,
+        slotNumber,
       },
     });
   } catch (error) {
@@ -278,7 +279,7 @@ const getMyEqubs = async (req, res) => {
         equbId: equb.equbId,
         name: equb.name,
         participationType: member.participationType,
-        formNumber: member.formNumber,
+        slotNumber: member.slotNumber,
         role: member.role,
         saving: equb.saving,
         roundDuration: equb.roundDuration,
@@ -393,7 +394,7 @@ const getEqubDetails = async (req, res) => {
         customUserId: member.userId.userId,
         name: member.userId.fullName,
         participationType: member.participationType,
-        formNumber: member.formNumber,
+        slotNumber: member.slotNumber,
         role: member.role,
         paymentHistory: member.paymentHistory,
       })),
@@ -420,7 +421,7 @@ const addMember = async (req, res) => {
   try {
     const {
       fullName,
-      formNumber,
+      slotNumber,
       participationType,
       secretNumber,
       phone,
@@ -453,16 +454,16 @@ const addMember = async (req, res) => {
       });
     }
 
-    // Check if form number is available
-    const formNumberTaken = req.equb.members.some(
-      (m) => m.formNumber === formNumber
+    // Check if slot number is available
+    const slotNumberTaken = req.equb.members.some(
+      (m) => m.slotNumber === slotNumber
     );
-    if (formNumberTaken) {
+    if (slotNumberTaken) {
       return res.status(400).json({
         status: "error",
         error: {
-          code: "equb/form-number-taken",
-          message: "Form number is already taken",
+          code: "equb/slot-number-taken",
+          message: "Slot number is already taken",
         },
       });
     }
@@ -494,11 +495,24 @@ const addMember = async (req, res) => {
       await user.save();
     }
 
+    // Fix: Use automatic form number assignment for slots
+    const nextSlotNumber = req.equb.calculateNextSlotNumber(participationType);
+    
+    if (!nextSlotNumber) {
+      return res.status(400).json({
+        status: "error",
+        error: {
+          code: "equb/no-slots-available",
+          message: "No available slots in this equb. All slots are currently occupied.",
+        },
+      });
+    }
+    
     // Add member to equb
     await req.equb.addMember(user._id, {
       name: fullName,
       participationType,
-      formNumber,
+      slotNumber: nextSlotNumber, // Use calculated slot number
       role: "member",
     });
 
@@ -751,7 +765,7 @@ const getEqubMembers = async (req, res) => {
       userId: member.userId._id,
       name: member.userId.fullName,
       participationType: member.participationType,
-      formNumber: member.formNumber,
+      slotNumber: member.slotNumber,
       role: member.role,
       phone: member.userId.phoneNumber,
       isActive: member.isActive
@@ -824,7 +838,7 @@ const getMemberPaymentHistory = async (req, res) => {
       userId: member.userId._id,
       name: member.userId.fullName,
       participationType: member.participationType,
-      formNumber: member.formNumber,
+      slotNumber: member.slotNumber,
       role: member.role
     };
 
@@ -877,7 +891,7 @@ const getUnpaidMembers = async (req, res) => {
               userId: member.userId._id,
               name: member.userId.fullName,
               unpaidRounds,
-              formNumber: member.formNumber,
+              slotNumber: member.slotNumber,
               phone: member.userId.phoneNumber,
               paidRounds,
               equbId: equb.equbId,
@@ -904,13 +918,35 @@ const getUnpaidMembers = async (req, res) => {
   }
 };
 
+// Helper function to get slot winners with share amounts
+const getSlotWinners = (equb, slotNumber) => {
+  const slotMembers = equb.members.filter(m => m.slotNumber === slotNumber);
+  return slotMembers.map(member => ({
+    userId: member.userId,
+    name: member.name,
+    participationType: member.participationType,
+    shareAmount: calculateShareAmount(equb.saving, member.participationType)
+  }));
+};
+
+// Helper function to calculate share amount based on participation type
+const calculateShareAmount = (totalAmount, participationType) => {
+  switch(participationType) {
+    case 'full': return totalAmount;
+    case 'half': return totalAmount / 2;
+    case 'quarter': return totalAmount / 4;
+    default: return totalAmount;
+  }
+};
+
 // Get Round Winners
 const getRoundWinners = async (req, res) => {
   try {
     const { equbId } = req.params;
     const userId = req.user._id;
 
-    const equb = await Equb.findOne({ equbId, isActive: true })
+    // Remove the isActive filter to allow access to all equbs (including old ones)
+    const equb = await Equb.findOne({ equbId })
       .populate('members.userId', 'fullName phoneNumber');
 
     if (!equb) {
@@ -937,19 +973,31 @@ const getRoundWinners = async (req, res) => {
       });
     }
 
+    // If no round winners, return empty array
+    if (!equb.roundWinners || equb.roundWinners.length === 0) {
+      return res.status(200).json({
+        status: "success",
+        data: [],
+        message: "No round winners found for this equb"
+      });
+    }
+
     const roundWinners = equb.roundWinners.map(round => {
-      const winners = round.winnerFormNumbers.map(formNumber => {
-        const member = equb.members.find(m => m.formNumber === formNumber);
+      const winners = round.winnerSlotNumbers.map(slotNumber => {
+        const member = equb.members.find(m => m.slotNumber === slotNumber);
         if (member) {
           const paidRounds = member.paymentHistory.filter(p => p.status === 'paid').length;
           const unpaidRounds = equb.currentRound - paidRounds;
           
+          // Fix: Include slot winners with share amounts
+          const slotWinners = getSlotWinners(equb, slotNumber);
+          
           return {
-            name: member.userId.fullName,
-            phone: member.userId.phoneNumber,
-            formNumber: member.formNumber,
-            unpaidRounds,
+            slotNumber: member.slotNumber,
+            slotWinners: slotWinners,
+            totalSlotAmount: equb.saving,
             paidRounds,
+            unpaidRounds,
             participationType: member.participationType
           };
         }
@@ -1040,11 +1088,110 @@ const updateEqub = async (req, res) => {
   }
 };
 
+// Helper function to calculate next round date
+const calculateNextRoundDate = (roundDuration, startDate, currentRound) => {
+  const nextRoundDate = new Date(startDate);
+  if (roundDuration === "weekly") {
+    nextRoundDate.setDate(nextRoundDate.getDate() + currentRound * 7);
+  } else if (roundDuration === "monthly") {
+    nextRoundDate.setMonth(nextRoundDate.getMonth() + currentRound);
+  } else if (roundDuration === "daily") {
+    nextRoundDate.setDate(nextRoundDate.getDate() + currentRound);
+  }
+  return nextRoundDate;
+};
+
+// Get Available Slot Numbers for Winner Selection
+const getAvailableSlotNumbersForWinner = async (req, res) => {
+  try {
+    const { equbId } = req.params;
+    const userId = req.user._id;
+
+    const equb = await Equb.findOne({ equbId, isActive: true });
+
+    if (!equb) {
+      return res.status(404).json({
+        status: "error",
+        error: {
+          code: "equb/not-found",
+          message: "Equb not found",
+        },
+      });
+    }
+
+    // Check if user is admin
+    const member = equb.members.find(
+      (m) => m.userId.toString() === userId.toString()
+    );
+    if (!member || !['admin', 'judge'].includes(member.role)) {
+      return res.status(403).json({
+        status: "error",
+        error: {
+          code: "equb/insufficient-permissions",
+          message: "Only admins and judges can view available form numbers",
+        },
+      });
+    }
+
+    // Get available slot numbers (excluding previous winners)
+    const availableSlotNumbers = getAvailableSlotNumbersHelper(equb);
+    
+    // Get detailed information about each available slot
+    const availableSlots = availableSlotNumbers.map(slotNumber => {
+      const slotMembers = equb.members.filter(m => m.slotNumber === slotNumber);
+      return {
+        slotNumber,
+        slotMembers: slotMembers.map(member => ({
+          userId: member.userId,
+          name: member.name,
+          participationType: member.participationType,
+          hasPaidCurrentRound: member.paymentHistory.some(p => 
+            p.roundNumber === equb.currentRound && p.status === 'paid'
+          )
+        })),
+        totalSlotAmount: equb.saving,
+        isEligible: slotMembers.every(member => 
+          member.paymentHistory.some(p => 
+            p.roundNumber === equb.currentRound && p.status === 'paid'
+          )
+        )
+      };
+    });
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        currentRound: equb.currentRound,
+        totalSlots: equb.maxMembers,
+        completedRounds: equb.roundWinners.length,
+        availableSlots,
+        nextRoundDate: equb.nextRoundDate
+      },
+    });
+  } catch (error) {
+    console.error("Get available form numbers error:", error);
+    res.status(500).json({
+      status: "error",
+      error: {
+        code: "equb/get-available-form-numbers-failed",
+        message: "Failed to get available form numbers",
+      },
+    });
+  }
+};
+
+// Helper function to get available slot numbers (excluding previous winners)
+const getAvailableSlotNumbersHelper = (equb) => {
+  const allSlotNumbers = [...new Set(equb.members.map(m => m.slotNumber))];
+  const usedSlotNumbers = equb.roundWinners.flatMap(round => round.winnerSlotNumbers);
+  return allSlotNumbers.filter(slotNumber => !usedSlotNumbers.includes(slotNumber));
+};
+
 // Post Round Winner
 const postRoundWinner = async (req, res) => {
   try {
     const { equbId } = req.params;
-    const { formNumbers, participationType } = req.body;
+    const { slotNumbers, participationType } = req.body;
     const userId = req.user._id;
 
     const equb = await Equb.findOne({ equbId, isActive: true });
@@ -1073,17 +1220,51 @@ const postRoundWinner = async (req, res) => {
       });
     }
 
-    // Validate form numbers exist in equb
-    for (const formNumber of formNumbers) {
-      const memberExists = equb.members.find(m => m.formNumber === formNumber);
+    // Fix: Get available slot numbers (excluding previous winners)
+    const availableSlotNumbers = getAvailableSlotNumbersHelper(equb);
+    
+    // Validate slot numbers exist in equb and are available
+    for (const slotNumber of slotNumbers) {
+      const memberExists = equb.members.find(m => m.slotNumber === slotNumber);
       if (!memberExists) {
         return res.status(400).json({
           status: "error",
           error: {
-            code: "equb/invalid-form-number",
-            message: `Form number ${formNumber} does not exist in this equb`,
+            code: "equb/invalid-slot-number",
+            message: `Slot number ${slotNumber} does not exist in this equb`,
           },
         });
+      }
+      
+      // Check if slot number has already won
+      if (!availableSlotNumbers.includes(slotNumber)) {
+        return res.status(400).json({
+          status: "error",
+          error: {
+            code: "equb/slot-number-already-won",
+            message: `Slot number ${slotNumber} has already won in a previous round`,
+          },
+        });
+      }
+      
+      // Fix: Validate that all participants in the slot have paid for current round
+      const slotMembers = equb.members.filter(m => m.slotNumber === slotNumber);
+      const currentRound = equb.currentRound;
+      
+      for (const slotMember of slotMembers) {
+        const currentRoundPayment = slotMember.paymentHistory.find(p => 
+          p.roundNumber === currentRound && p.status === 'paid'
+        );
+        
+        if (!currentRoundPayment) {
+          return res.status(400).json({
+            status: "error",
+            error: {
+              code: "equb/payment-not-complete",
+              message: `Member ${slotMember.name} (Slot ${slotNumber}) has not paid for round ${currentRound}. All participants must pay before declaring a winner.`,
+            },
+          });
+        }
       }
     }
 
@@ -1091,7 +1272,7 @@ const postRoundWinner = async (req, res) => {
     const expectedWinnerCount = participationType === 'full' ? 1 : 
                                participationType === 'half' ? 2 : 4;
     
-    if (formNumbers.length !== expectedWinnerCount) {
+    if (slotNumbers.length !== expectedWinnerCount) {
       return res.status(400).json({
         status: "error",
         error: {
@@ -1104,23 +1285,41 @@ const postRoundWinner = async (req, res) => {
     // Add to round winners
     const roundWinner = {
       roundNumber: equb.currentRound,
-      winnerFormNumbers: formNumbers,
+      winnerSlotNumbers: slotNumbers,
       participationType,
       createdAt: new Date()
     };
 
     equb.roundWinners.push(roundWinner);
+    
+    // Fix: Automatically progress to next round
+    equb.currentRound = equb.roundWinners.length + 1;
+    
+    // Fix: Calculate next round date
+    if (equb.roundDuration && equb.startDate) {
+      equb.nextRoundDate = calculateNextRoundDate(equb.roundDuration, equb.startDate, equb.currentRound);
+    }
+    
+    // Fix: Check if Equb is complete (all slots have won)
+    if (equb.roundWinners.length === equb.maxMembers) {
+      equb.isActive = false;
+      equb.completedAt = new Date();
+      equb.nextRoundDate = null;
+    }
+    
     await equb.save();
 
     res.status(200).json({
       status: "success",
       message: "Round winner posted successfully",
       data: {
-        roundNumber: equb.currentRound,
-        winners: formNumbers.map(formNumber => ({
-          formNumber,
+        roundNumber: equb.currentRound - 1, // Previous round number
+        winners: slotNumbers.map(slotNumber => ({
+          slotNumber,
           participationType
-        }))
+        })),
+        nextRound: equb.currentRound,
+        nextRoundDate: equb.nextRoundDate
       },
     });
   } catch (error) {
@@ -1162,6 +1361,7 @@ const createEqub = async (req, res) => {
       equbId: Equb.generateEqubId(),
       createdBy: creatorId,
       maxMembers: numberOfMembers,
+      totalRounds: numberOfMembers, // Fix: Automatically set total rounds = number of slots
       saving: totalSaving,
       roundDuration: duration,
       level,
@@ -1172,7 +1372,7 @@ const createEqub = async (req, res) => {
           userId: creatorId,
           name: req.user.fullName,
           participationType: "full",
-          formNumber: 1,
+          slotNumber: 1,
           role: "admin",
           joinedDate: new Date(),
           isActive: true,
@@ -1206,7 +1406,7 @@ const createEqub = async (req, res) => {
           userId: user._id,
           name: collector.fullName,
           participationType: "full",
-          formNumber: collector.formNumber || 1,
+          slotNumber: collector.slotNumber || 1,
           role: "collector",
           joinedDate: new Date(),
           isActive: true,
@@ -1240,7 +1440,7 @@ const createEqub = async (req, res) => {
           userId: user._id,
           name: judge.fullName,
           participationType: "full",
-          formNumber: judge.formNumber || 1,
+          slotNumber: judge.slotNumber || 1,
           role: "judge",
           joinedDate: new Date(),
           isActive: true,
@@ -1274,7 +1474,7 @@ const createEqub = async (req, res) => {
           userId: user._id,
           name: writer.fullName,
           participationType: "full",
-          formNumber: writer.formNumber || 1,
+          slotNumber: writer.slotNumber || 1,
           role: "writer",
           joinedDate: new Date(),
           isActive: true,
@@ -1443,6 +1643,77 @@ const getEqubCreationDetails = async (req, res) => {
   }
 };
 
+// Get Available Slot Numbers for Manual Assignment
+const getAvailableSlotNumbers = async (req, res) => {
+  try {
+    const { equbId } = req.params;
+    const userId = req.user._id;
+
+    const equb = await Equb.findOne({ equbId, isActive: true });
+
+    if (!equb) {
+      return res.status(404).json({
+        status: "error",
+        error: {
+          code: "equb/not-found",
+          message: "Equb not found",
+        },
+      });
+    }
+
+    // Check if user is admin or has permission to add members
+    const member = equb.members.find(
+      (m) => m.userId.toString() === userId.toString()
+    );
+    if (!member || !['admin', 'collector', 'judge', 'writer'].includes(member.role)) {
+      return res.status(403).json({
+        status: "error",
+        error: {
+          code: "equb/insufficient-permissions",
+          message: "Only admins and special members can view available slot numbers",
+        },
+      });
+    }
+
+    // Get available slot numbers
+    const availableSlotNumbers = equb.getAvailableSlotNumbers();
+    
+    // Get current slot usage
+    const currentSlotUsage = equb.members.map(member => ({
+      slotNumber: member.slotNumber,
+      memberName: member.name,
+      participationType: member.participationType,
+      role: member.role
+    })).sort((a, b) => a.slotNumber - b.slotNumber);
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        equbId: equb.equbId,
+        equbName: equb.name,
+        totalSlots: equb.maxMembers,
+        usedSlots: equb.members.length,
+        availableSlots: availableSlotNumbers,
+        currentSlotUsage,
+        slotCapacity: {
+          full: 1,      // 1 person per slot
+          half: 2,      // 2 people per slot
+          quarter: 4    // 4 people per slot
+        }
+      },
+    });
+  } catch (error) {
+    console.error("Get available slot numbers error:", error);
+    res.status(500).json({
+      status: "error",
+      error: {
+        code: "equb/get-available-slots-failed",
+        message: "Failed to get available slot numbers",
+      },
+    });
+  }
+};
+
 module.exports = {
   discoverEqubs,
   joinEqub,
@@ -1459,4 +1730,6 @@ module.exports = {
   postRoundWinner,
   createEqub,
   getEqubCreationDetails,
+  getAvailableSlotNumbersForWinner,
+  getAvailableSlotNumbers,
 };

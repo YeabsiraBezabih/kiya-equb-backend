@@ -1,10 +1,3 @@
-# Implementation Summary
-
-## Overview
-This document summarizes the key implementations and changes made to the Kiya Equb Backend system.
-
-## Recent Updates
-
 ### Custom User ID Support for Equb Member Management (Latest)
 
 **Date**: Current implementation
@@ -44,68 +37,43 @@ This document summarizes the key implementations and changes made to the Kiya Eq
 - Better API documentation and validation
 - Improved test coverage
 
-## Previous Implementations
+### MongoDB Logging Implementation (Latest)
 
-### Authentication System
-- JWT-based authentication with refresh tokens
-- Phone number and password-based signup/signin
-- Account verification system
-- Password reset functionality
+**Date**: Current implementation
 
-### Equb Management
-- Equb creation with configurable parameters
-- Member management (add, remove, role updates)
-- Payment tracking and round management
-- Notification system integration
+**Changes Made**:
 
-### Payment System
-- Payment creation and tracking
-- Multiple payment methods support
-- Round-based payment management
-- Payment history and statistics
+1. **Logger Configuration Updates**:
+   - Updated `logger.js` to use configuration from config files
+   - Added MongoDB transport support with configurable options
+   - Implemented conditional MongoDB transport based on configuration
 
-### User Management
-- User profile management
-- Custom userId generation (U + 9 alphanumeric characters)
-- Referral system
-- Bank account management
+2. **Configuration File Updates**:
+   - **default.json**: Added MongoDB logging configuration
+   - **development.json**: Added MongoDB logging with debug level
+   - **production.json**: Added MongoDB logging with warn level
+   - **custom-environment-variables.json**: Added logging environment variable mappings
 
-## Architecture Overview
+3. **Environment Variables**:
+   - `LOG_LEVEL`: Overall logging level
+   - `LOG_MONGODB_ENABLED`: Enable/disable MongoDB logging
+   - `LOG_MONGODB_DB`: MongoDB connection string for logs
+   - `LOG_MONGODB_COLLECTION`: Collection name for storing logs
 
-### Models
-- **User**: User accounts with custom userIds
-- **Equb**: Equb groups with member management
-- **Payment**: Payment tracking and history
-- **Notification**: System notifications
+4. **Testing and Documentation**:
+   - Created `test-logging.js` script for testing MongoDB logging
+   - Added `test:logging` npm script
+   - Updated README.md with MongoDB logging documentation
 
-### Controllers
-- **auth.controller**: Authentication and user management
-- **equb.controller**: Equb creation and management
-- **payment.controller**: Payment processing and tracking
-- **profile.controller**: User profile management
-- **notification.controller**: Notification handling
+**Technical Details**:
+- Logs are stored in MongoDB Atlas database `ekub-logs`
+- Different collections for different environments (logs, dev-logs, prod-logs)
+- Configurable log levels per environment
+- Automatic fallback to console-only logging if MongoDB is disabled
 
-### Middleware
-- **auth.js**: Authentication and authorization
-- **validation.js**: Request validation using Joi
-- **rate-limit-config.js**: API rate limiting
-- **error.js**: Error handling middleware
-
-### Routes
-- RESTful API endpoints with proper HTTP methods
-- Swagger documentation for all endpoints
-- Proper error handling and status codes
-- Rate limiting and security measures
-
-## Testing
-- Comprehensive test suites for all major functionality
-- Authentication tests
-- Equb management tests
-- Payment system tests
-- API endpoint validation
-
-## Deployment
-- Docker support with docker-compose
-- Environment-specific configurations
-- Production deployment guidelines
-- Monitoring and logging setup
+**Benefits**:
+- Centralized log storage in the cloud
+- Easy log querying and analysis using MongoDB queries
+- Scalable logging infrastructure
+- No local log file management required
+- Environment-specific logging configurations

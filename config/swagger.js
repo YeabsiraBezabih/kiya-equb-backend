@@ -238,9 +238,9 @@ const options = {
                   enum: ['full', 'half'], 
                   description: 'Participation type'
                 },
-                formNumber: { 
+                slotNumber: { 
                   type: 'number', 
-                  description: 'Form number',
+                  description: 'Slot number',
                   minimum: 1
                 },
                 role: { 
@@ -405,9 +405,9 @@ const options = {
               enum: ['full', 'half'], 
               description: 'User\'s participation type in the equb'
             },
-            formNumber: { 
+            slotNumber: { 
               type: 'number', 
-              description: 'User\'s form number in the equb'
+              description: 'User\'s slot number in the equb'
             }
           }
         },

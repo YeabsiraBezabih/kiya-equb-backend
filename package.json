@@ -9,6 +9,9 @@
     "build": "npm install",
     "test": "jest",
     "test:watch": "jest --watch",
+    "test:logging": "node test-logging.js",
+    "seed": "node seed-database.js",
+    "verify": "node verify-seeded-data.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },

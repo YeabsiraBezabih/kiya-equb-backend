@@ -93,7 +93,7 @@ POST /api/mobile/auth/signin
       {
         "equbId": "EQB123456789",
         "participationType": "full",
-        "formNumber": 1
+        "slotNumber": 1
       }
     ]
   }
@@ -251,21 +251,21 @@ Content-Type: multipart/form-data
     {
       "fullName": "Jane Smith",
       "phoneNumber": "+251987654321",
-      "formNumber": 2
+      "slotNumber": 2
     }
   ],
   "judgesInfo": [
     {
       "fullName": "Bob Johnson",
       "phoneNumber": "+251976543210",
-      "formNumber": 3
+      "slotNumber": 3
     }
   ],
   "writersInfo": [
     {
       "fullName": "Alice Brown",
       "phoneNumber": "+251965432109",
-      "formNumber": 4
+      "slotNumber": 4
     }
   ],
   "privacyPolicy": "<file_upload>"
@@ -294,7 +294,7 @@ Content-Type: multipart/form-data
           "userId": "USR123456789",
           "name": "John Doe",
           "participationType": "full",
-          "formNumber": 1,
+          "slotNumber": 1,
           "role": "admin",
           "joinedDate": "2024-01-15T10:30:00.000Z",
           "isActive": true
@@ -457,7 +457,7 @@ Authorization: Bearer <access_token>
 {
   "equbId": "EQB123456789",
   "participationType": "full",
-  "formNumber": 6
+  "slotNumber": 6
 }
 ```
 
@@ -469,7 +469,7 @@ Authorization: Bearer <access_token>
   "data": {
     "equbId": "EQB123456789",
     "participationType": "full",
-    "formNumber": 6,
+    "slotNumber": 6,
     "joinedDate": "2024-01-15T10:30:00.000Z"
   }
 }
@@ -510,7 +510,7 @@ Authorization: Bearer <access_token>
         "level": "beginner",
         "role": "admin",
         "participationType": "full",
-        "formNumber": 1,
+        "slotNumber": 1,
         "joinedDate": "2024-01-15T10:30:00.000Z",
         "isActive": true
       }
@@ -551,7 +551,7 @@ Authorization: Bearer <access_token>
           "name": "John Doe",
           "profilePicture": "https://example.com/profile.jpg",
           "participationType": "full",
-          "formNumber": 1,
+          "slotNumber": 1,
           "role": "admin",
           "joinedDate": "2024-01-15T10:30:00.000Z",
           "isActive": true
@@ -587,7 +587,7 @@ Authorization: Bearer <access_token>
   "fullName": "New Member",
   "phoneNumber": "+251912345679",
   "participationType": "full",
-  "formNumber": 7,
+  "slotNumber": 7,
   "role": "member"
 }
 ```
@@ -602,7 +602,7 @@ Authorization: Bearer <access_token>
       "userId": "USR987654321",
       "name": "New Member",
       "participationType": "full",
-      "formNumber": 7,
+      "slotNumber": 7,
       "role": "member",
       "joinedDate": "2024-01-15T10:30:00.000Z",
       "isActive": true
@@ -771,7 +771,7 @@ Authorization: Bearer <access_token>
         "userId": "USR123456789",
         "name": "John Doe",
         "phoneNumber": "+251912345678",
-        "formNumber": 1,
+        "slotNumber": 1,
         "round": 1,
         "amount": 5000,
         "dueDate": "2024-01-20T00:00:00.000Z",

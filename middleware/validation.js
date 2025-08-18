@@ -108,7 +108,7 @@ const equbSchemas = {
   joinEqub: Joi.object({
     equbId: commonSchemas.equbId.required(),
     participationType: Joi.string().valid('full', 'half', 'quarter').required(),
-    formNumber: Joi.number().integer().min(1).required(),
+    slotNumber: Joi.number().integer().min(1).optional(), // Optional since it's auto-assigned
     secretNumber: Joi.string().length(6).optional()
   }),
      
@@ -123,7 +123,7 @@ const equbSchemas = {
       .pattern(/^[a-zA-Z\s]+$/)
       .message('Full name must contain only letters and spaces')
       .required(),
-    formNumber: Joi.number().integer().min(1).required(),
+    slotNumber: Joi.number().integer().min(1).optional(), // Optional since it's auto-assigned
     participationType: Joi.string().valid('full', 'half', 'quarter').required(),
     secretNumber: Joi.string().length(6).optional(),
     phone: commonSchemas.phoneNumber.required(),
@@ -135,7 +135,7 @@ const equbSchemas = {
   }),
 
   postRoundWinner: Joi.object({
-    formNumbers: Joi.array().items(Joi.number().integer().min(1)).required(),
+    slotNumbers: Joi.array().items(Joi.number().integer().min(1)).required(),
     participationType: Joi.string().valid('full', 'half', 'quarter').required()
   }),
 
@@ -184,7 +184,7 @@ const equbSchemas = {
       Joi.object({
         fullName: Joi.string().min(2).max(100).required(),
         phoneNumber: Joi.string().pattern(/^\+?[1-9]\d{1,14}$/).required(),
-        formNumber: Joi.string().optional(),
+        slotNumber: Joi.string().optional(),
         password: Joi.string().min(6).max(128).optional()
       })
     ).max(10).optional(),
@@ -192,7 +192,7 @@ const equbSchemas = {
       Joi.object({
         fullName: Joi.string().min(2).max(100).required(),
         phoneNumber: Joi.string().pattern(/^\+?[1-9]\d{1,14}$/).required(),
-        formNumber: Joi.string().optional(),
+        slotNumber: Joi.string().optional(),
         password: Joi.string().min(6).max(128).optional()
       })
     ).max(5).optional(),
@@ -200,7 +200,7 @@ const equbSchemas = {
       Joi.object({
         fullName: Joi.string().min(2).max(100).required(),
         phoneNumber: Joi.string().pattern(/^\+?[1-9]\d{1,14}$/).required(),
-        formNumber: Joi.string().optional(),
+        slotNumber: Joi.string().optional(),
         password: Joi.string().min(6).max(128).optional()
       })
     ).max(5).optional()

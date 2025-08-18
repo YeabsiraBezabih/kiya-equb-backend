@@ -204,9 +204,39 @@ The application uses Winston for comprehensive logging:
 
 - **Console Logging** - Development and debugging
 - **File Logging** - Production log files
-- **MongoDB Logging** - Database-stored logs
+- **MongoDB Logging** - Database-stored logs in MongoDB Atlas
 - **Log Rotation** - Automatic log file rotation
 - **Log Levels** - Configurable log levels per environment
+
+### MongoDB Logging Configuration
+
+The application now supports logging directly to MongoDB Atlas:
+
+```json
+{
+  "logging": {
+    "level": "info",
+    "mongodb": {
+      "enabled": true,
+      "db": "mongodb+srv://mernapp:mernapp@cluster0.fezq01p.mongodb.net/ekub-logs",
+      "collection": "logs",
+      "level": "info"
+    }
+  }
+}
+```
+
+**Environment Variables:**
+- `LOG_LEVEL` - Overall logging level
+- `LOG_MONGODB_ENABLED` - Enable/disable MongoDB logging
+- `LOG_MONGODB_DB` - MongoDB connection string for logs
+- `LOG_MONGODB_COLLECTION` - Collection name for storing logs
+
+**Benefits:**
+- Centralized log storage in the cloud
+- Easy log querying and analysis
+- Scalable logging infrastructure
+- No local log file management required
 
 ## 🧪 Testing
 
@@ -249,17 +279,7 @@ npm run test:coverage
    - Configure database clustering
    - Implement caching strategies
 
-### Docker Deployment
 
-```dockerfile
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-COPY . .
-EXPOSE 3001
-CMD ["npm", "start"]
-```
 
 ## 📝 API Documentation
 

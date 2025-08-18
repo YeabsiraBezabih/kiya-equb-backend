@@ -91,9 +91,9 @@ router.use(authRateLimit);
  *                             type: string
  *                             enum: [full, half]
  *                             description: User's participation type in the equb
- *                           formNumber:
+ *                           slotNumber:
  *                             type: number
- *                             description: User's form number in the equb
+ *                             description: User's slot number in the equb
  *       400:
  *         description: Validation error
  *         content:

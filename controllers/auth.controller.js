@@ -87,7 +87,7 @@ const signIn = async (req, res) => {
       return {
         equbId: equb.equbId,
         participationType: member.participationType,
-        formNumber: member.formNumber
+        slotNumber: member.slotNumber
       };
     });
 
