@@ -4,10 +4,15 @@ const config = require("config");
 
 module.exports = function () {
   const dbUrl = config.get("database.url");
+  const dbName = config.has("database.name") ? config.get("database.name") : undefined;
+  const dbOptions = config.has("database.options") ? config.get("database.options") : {};
 
-  console.log("Connecting to MongoDB:", dbUrl);
+  console.log("Connecting to MongoDB:", dbUrl, dbName ? `(db: ${dbName})` : "");
   mongoose
-    .connect(dbUrl)
+    .connect(dbUrl, {
+      dbName,
+      ...dbOptions,
+    })
     .then(() => {
       logger.info(`Connected to MongoDB: ${dbUrl.split("@")[1] || dbUrl}`);
       logger.info(`Database: ${mongoose.connection.name}`);

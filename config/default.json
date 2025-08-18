@@ -5,6 +5,7 @@
   },
   "database": {
     "url": "mongodb+srv://mernapp:mernapp@cluster0.fezq01p.mongodb.net/",
+    "name": "equb-dev",
     "options": {
       "maxPoolSize": 10,
       "serverSelectionTimeoutMS": 5000,

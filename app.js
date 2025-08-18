@@ -55,7 +55,7 @@ const port = config.get("server.port") || process.env.PORT || 3001;
 const server = app.listen(port, config.get("server.host") || "0.0.0.0", () => {
   console.log(`🚀 Ekub App Backend is running on port ${port}`);
   console.log(`🌍 Environment: ${config.util.getEnv("NODE_ENV")}`);
-  console.log(`🔗 Health check: ${config.get("database.url")}:${port}/health`);
+  console.log(`🔗 Health check: http://localhost:${port}/health`);
 });
 
 // Graceful shutdown
