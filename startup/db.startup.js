@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { logger } = require("../logger");
+const { logger, addMongoDBTransport } = require("../logger");
 const config = require("config");
 
 module.exports = function () {
@@ -14,32 +14,69 @@ module.exports = function () {
       ...dbOptions,
     })
     .then(() => {
-      logger.info(`Connected to MongoDB: ${dbUrl.split("@")[1] || dbUrl}`);
-      logger.info(`Database: ${mongoose.connection.name}`);
+      try {
+        logger.info(`Connected to MongoDB: ${dbUrl.split("@")[1] || dbUrl}`);
+        logger.info(`Database: ${mongoose.connection.name}`);
+      } catch (logError) {
+        console.log(`Connected to MongoDB: ${dbUrl.split("@")[1] || dbUrl}`);
+        console.log(`Database: ${mongoose.connection.name}`);
+      }
+      
+      // Add MongoDB transport to logger after successful connection
+      try {
+        addMongoDBTransport();
+      } catch (error) {
+        console.warn('Failed to add MongoDB transport to logger:', error.message);
+        // Continue without MongoDB logging transport
+      }
     })
     .catch((err) => {
       console.log("Failed to connect to MongoDB:", dbUrl, err.message);
       logger.error("Failed to connect to MongoDB:", err.message);
-      process.exit(1);
+      // Don't exit the process, let it continue and retry
+      console.log("Will retry database connection...");
     });
 
   // Handle connection events
   mongoose.connection.on("error", (err) => {
-    logger.error("MongoDB connection error:", err);
+    try {
+      logger.error("MongoDB connection error:", err);
+    } catch (logError) {
+      console.error("MongoDB connection error:", err.message);
+    }
   });
 
   mongoose.connection.on("disconnected", () => {
-    logger.warn("MongoDB disconnected");
+    try {
+      logger.warn("MongoDB disconnected");
+    } catch (logError) {
+      console.warn("MongoDB disconnected");
+    }
   });
 
   mongoose.connection.on("reconnected", () => {
-    logger.info("MongoDB reconnected");
+    try {
+      logger.info("MongoDB reconnected");
+    } catch (logError) {
+      console.info("MongoDB reconnected");
+    }
   });
 
   // Graceful shutdown
   process.on("SIGINT", async () => {
-    await mongoose.connection.close();
-    logger.info("MongoDB connection closed through app termination");
-    process.exit(0);
+    try {
+      if (mongoose.connection.readyState === 1) { // Connected
+        await mongoose.connection.close();
+        try {
+          logger.info("MongoDB connection closed through app termination");
+        } catch (logError) {
+          console.log("MongoDB connection closed through app termination");
+        }
+      }
+      process.exit(0);
+    } catch (error) {
+      console.error("Error during graceful shutdown:", error.message);
+      process.exit(1);
+    }
   });
 };

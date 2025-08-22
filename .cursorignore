@@ -1,3 +1,5 @@
 !.env
 !.env.example
 !config/default.json
+!.env.local
+!.env.prod

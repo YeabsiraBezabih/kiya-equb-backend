@@ -3,7 +3,6 @@ const router = express.Router();
 const equbController = require('../controllers/equb.controller');
 
 const { authenticateToken, isEqubMember, isEqubAdmin, equbCreationRateLimit } = require('../middleware/auth');
-const upload = require('../middleware/upload');
 const {
   validateDiscoverEqubs,
   validateJoinEqub,
@@ -290,7 +289,6 @@ router.use(authenticateToken);
 router.post('/create', 
   authenticateToken, // Authentication first
   equbCreationRateLimit, // Then rate limiting
-  upload.single('privacyPolicy'), 
   validateEqubCreation, 
   equbController.createEqub
 );
@@ -1561,9 +1559,7 @@ router.get('/unpaid-members', authenticateToken, equbController.getUnpaidMembers
  *                                 type: string
  *                               accountHolder:
  *                                 type: string
- *                         privacyPolicy:
- *                           type: string
- *                           description: URL to privacy policy document (if uploaded)
+
  *                         creator:
  *                           type: object
  *                           properties:

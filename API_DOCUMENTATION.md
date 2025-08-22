@@ -267,8 +267,7 @@ Content-Type: multipart/form-data
       "phoneNumber": "+251965432109",
       "slotNumber": 4
     }
-  ],
-  "privacyPolicy": "<file_upload>"
+  ]
 }
 ```
 

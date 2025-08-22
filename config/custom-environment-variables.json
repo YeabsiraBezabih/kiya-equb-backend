@@ -1,6 +1,11 @@
 {
+  "server": {
+    "port": "PORT",
+    "host": "HOST"
+  },
   "database": {
-    "url": "MONGODB_URI"
+    "url": "MONGODB_URI",
+    "name": "MONGODB_NAME"
   },
   "logging": {
     "level": "LOG_LEVEL",
@@ -26,7 +31,18 @@
     "authToken": "TWILIO_AUTH_TOKEN",
     "fromNumber": "TWILIO_FROM_NUMBER"
   },
-  "server": {
-    "port": "PORT"
+  "fileUpload": {
+    "maxSize": "FILE_UPLOAD_MAX_SIZE",
+    "uploadPath": "FILE_UPLOAD_PATH"
+  },
+  "security": {
+    "bcryptRounds": "BCRYPT_ROUNDS",
+    "sessionTimeout": "SESSION_TIMEOUT",
+    "maxLoginAttempts": "MAX_LOGIN_ATTEMPTS",
+    "lockoutDuration": "LOCKOUT_DURATION"
+  },
+  "rateLimiting": {
+    "windowMs": "RATE_LIMIT_WINDOW_MS",
+    "max": "RATE_LIMIT_MAX"
   }
 }

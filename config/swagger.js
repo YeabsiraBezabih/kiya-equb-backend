@@ -18,12 +18,10 @@ const options = {
     },
     servers: [
       {
-        url: 'http://localhost:3001',
-        description: 'Development server'
-      },
-      {
-        url: 'https://kiya-equb-backend.onrender.com',
-        description: 'Production server'
+        url: process.env.NODE_ENV === 'production' 
+          ? (process.env.SWAGGER_PROD_URL || 'https://your-production-domain.com')
+          : 'http://localhost:3001',
+        description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Development server'
       }
     ],
     components: {

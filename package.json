@@ -13,7 +13,11 @@
     "seed": "node seed-database.js",
     "verify": "node verify-seeded-data.js",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "env:local": "node scripts/switch-env.js local",
+    "env:prod": "node scripts/switch-env.js prod",
+    "env:current": "node scripts/switch-env.js current",
+    "setup:env": "node scripts/setup-env.js"
   },
   "keywords": [
     "ekub",
@@ -30,6 +34,7 @@
     "compression": "^1.8.1",
     "config": "^4.1.0",
     "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
     "express": "^4.18.2",
     "express-rate-limit": "^7.3.1",
     "express-validator": "^7.0.1",

@@ -356,6 +356,11 @@ const getEqubDetails = async (req, res) => {
     // Determine equb level
     const level = equb.currentRound > 12 ? "old" : "new";
 
+    // Get members by role for the role-specific arrays
+    const collectors = equb.members.filter(member => member.role === 'collector');
+    const judges = equb.members.filter(member => member.role === 'judge');
+    const writers = equb.members.filter(member => member.role === 'writer');
+
     const equbDetails = {
       equbId: equb.equbId,
       name: equb.name,
@@ -371,23 +376,32 @@ const getEqubDetails = async (req, res) => {
       currentRound: equb.currentRound,
       totalRounds: equb.totalRounds,
       bankAccountDetail: equb.bankAccountDetail,
-      collectorsInfo: equb.collectorsInfo.map((collector) => ({
+      collectorsInfo: collectors.map((collector) => ({
         userId: collector.userId._id,
         customUserId: collector.userId.userId,
         name: collector.userId.fullName,
         phone: collector.userId.phoneNumber,
+        slotNumber: collector.slotNumber,
+        participationType: collector.participationType,
+        role: collector.role,
       })),
-      judgInfo: equb.judgInfo.map((judge) => ({
+      judgInfo: judges.map((judge) => ({
         userId: judge.userId._id,
         customUserId: judge.userId.userId,
         name: judge.userId.fullName,
         phone: judge.userId.phoneNumber,
+        slotNumber: judge.slotNumber,
+        participationType: judge.participationType,
+        role: judge.role,
       })),
-      writersInfo: equb.writersInfo.map((writer) => ({
+      writersInfo: writers.map((writer) => ({
         userId: writer.userId._id,
         customUserId: writer.userId.userId,
         name: writer.userId.fullName,
         phone: writer.userId.phoneNumber,
+        slotNumber: writer.slotNumber,
+        participationType: writer.participationType,
+        role: writer.role,
       })),
       members: equb.members.map((member) => ({
         userId: member.userId._id,
@@ -1610,7 +1624,6 @@ const getEqubCreationDetails = async (req, res) => {
           level: equb.level,
           startDate: equb.startDate,
           bankAccountDetail: equb.bankAccountDetail || [],
-          privacyPolicy: equb.privacyPolicy,
           creator: {
             _id: equb.createdBy._id,
             fullName: equb.createdBy.fullName,

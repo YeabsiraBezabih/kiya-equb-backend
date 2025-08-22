@@ -4,17 +4,15 @@
     "host": "localhost"
   },
   "database": {
-    "url": "mongodb+srv://mernapp:mernapp@cluster0.fezq01p.mongodb.net/",
+    "url": "mongodb://ekub_user:ekub_password@localhost:27021/ekub-app?authSource=ekub-app",
+    "name": "ekub-app",
     "options": {
       "maxPoolSize": 5,
       "serverSelectionTimeoutMS": 5000,
-      "socketTimeoutMS": 30000,
-      "bufferMaxEntries": 0
+      "socketTimeoutMS": 30000
     }
   },
   "jwt": {
-    "secret": "dev-jwt-secret-key-change-in-production",
-    "refreshSecret": "dev-refresh-secret-key-change-in-production",
     "accessExpiry": "1h",
     "refreshExpiry": "7d"
   },
@@ -26,42 +24,25 @@
     ]
   },
   "logging": {
-    "level": "debug",
     "filename": "logs/dev.log",
     "maxSize": "10m",
     "maxFiles": "7d",
     "mongodb": {
       "enabled": true,
-      "db": "mongodb+srv://mernapp:mernapp@cluster0.fezq01p.mongodb.net/ekub-logs",
       "collection": "dev-logs",
       "level": "debug"
     }
   },
   "email": {
-    "service": "gmail",
-    "user": "dev-email@gmail.com",
-    "pass": "dev-app-password"
+    "service": "gmail"
   },
   "sms": {
-    "provider": "twilio",
-    "accountSid": "dev-twilio-account-sid",
-    "authToken": "dev-twilio-auth-token",
-    "fromNumber": "+1234567890"
+    "provider": "twilio"
   },
   "fileUpload": {
-    "maxSize": "10MB",
-    "allowedTypes": ["image/jpeg", "image/png", "image/gif"],
-    "uploadPath": "uploads/dev/"
-  },
-  "security": {
-    "bcryptRounds": 10,
-    "sessionTimeout": 7200000,
-    "maxLoginAttempts": 10,
-    "lockoutDuration": 300000
+    "allowedTypes": ["image/jpeg", "image/png", "image/gif"]
   },
   "rateLimiting": {
-    "windowMs": 900000,
-    "max": 200,
     "message": "Too many requests from this IP, please try again later."
   }
 }
