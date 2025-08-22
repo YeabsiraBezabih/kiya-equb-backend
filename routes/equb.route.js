@@ -25,12 +25,13 @@ router.use(authenticateToken);
  *     summary: Create new Ekub
  *     tags: [Equbs]
  *     description: Create a new equb with the specified configuration and optional team members
+ *     operationId: createEqub
  *     security:
  *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             required:
@@ -91,8 +92,13 @@ router.use(authenticateToken);
  *                       type: string
  *                       description: Bank account number
  *                       example: "1000123456789"
- *                     minLength: 5
- *                     maxLength: 50
+ *                       minLength: 5
+ *                       maxLength: 50
+ *                     accountType:
+ *                       type: string
+ *                       description: Type of account
+ *                       example: "checking"
+ *                       enum: [checking, savings]
  *                     accountHolder:
  *                       type: string
  *                       description: Name of account holder
@@ -141,10 +147,10 @@ router.use(authenticateToken);
  *                       minLength: 2
  *                       maxLength: 100
  *                     phoneNumber:
- *                       type: string
- *                       description: Phone number in international format
- *                       example: "+251922345678"
- *                     pattern: "^\\+?[1-9]\\d{1,14}$"
+*                       type: string
+*                       description: Phone number in international format
+*                       example: "+251922345678"
+*                       pattern: "^\\+?[1-9]\\d{1,14}$"
  *                     slotNumber:
  *                       type: string
  *                       description: Slot number for the judge (optional)
@@ -169,10 +175,10 @@ router.use(authenticateToken);
  *                       minLength: 2
  *                       maxLength: 100
  *                     phoneNumber:
- *                       type: string
- *                       description: Phone number in international format
- *                       example: "+251933456789"
- *                     pattern: "^\\+?[1-9]\\d{1,14}$"
+*                       type: string
+*                       description: Phone number in international format
+*                       example: "+251933456789"
+*                       pattern: "^\\+?[1-9]\\d{1,14}$"
  *                     slotNumber:
  *                       type: string
  *                       description: Slot number for the writer (optional)
